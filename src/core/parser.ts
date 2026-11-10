@@ -6,8 +6,8 @@ export const FILE_LIMIT = 10 * 1024 * 1024;
 export const ROW_LIMIT = 20000;
 const aliases: Partial<Record<Field, string[]>> = {
   customer:['customer','customer name','client'], store:['store','store name','seller'],
-  period:['report period','reporting period','period'], country:['destination country','destination country code'],
-  marketplace:['marketplace','marketplace id'], asin:['asin'],sku:['sku','seller sku'],name:['product name','item name'],
+  period:['report period','reporting period','period'], country:['destination country','destination country code','ship to country code','ship to country'], countryName:['ship to country','destination country name'],
+  marketplace:['marketplace','marketplace id','amazon marketplace'], asin:['asin'],sku:['sku','seller sku'],name:['product name','item name'],
   brand:['brand'],sales:['sales quantity','quantity sold','units sold'],returns:['return quantity','returns quantity'],
   category:['epr category','epr type'],material:['packaging material','material'],layer:['packaging layer'],
   weight:['weight'],unit:['weight unit','unit of weight'],weightMode:['weight basis','weight mode'],
@@ -21,6 +21,9 @@ export function inferMapping(headers:string[]):Sheet['mapping'] {
     const matches = headers.filter(h => [fields[field],...(aliases[field] || [])].some(a=>key(a)===key(h)));
     if(matches.length===1) mapping[field]=matches[0];
   }
+  // Amazon publishes a country code and a separate name: prefer the explicit code, retain the name for consistency checks.
+  const amazonCode=headers.filter(h=>key(h)==='shiptocountrycode');
+  if(amazonCode.length===1) mapping.country=amazonCode[0];
   return mapping;
 }
 function matrixToSheet(matrix:unknown[][],name:string,fileName:string,fileId:string,hash:string,index:number,sourceRowNumbers?:number[]):Sheet {

@@ -1,6 +1,7 @@
 import Decimal from 'decimal.js';
 import type { Calculation, DataRow, Edit, Field, Issue, ResultRow, Settings, Sheet, Summary, Values } from './types';
-import { normalizeBusiness, normalizeCountry } from './rules';
+import { normalizeBusiness } from './rules';
+import { resolveDestination } from './country';
 
 Decimal.set({ precision: 40 });
 /** Locale is explicitly selected per sheet; ambiguous punctuation is never auto-detected. */
@@ -65,14 +66,15 @@ export function calculate(input: DataRow[], settings: Settings, edits: Edit[], e
     for (const edit of changes) effective[edit.field] = edit.after;
     const issues: Issue[] = [];
     const add = (severity: Issue['severity'], code: string, message: string) => issues.push({ rowId: row.id, severity, code, message });
-    const country = normalizeCountry(effective.country), category = normalizeBusiness(effective.category);
-    const countryRecognized = /^[A-Z]{2}$/.test(country);
+    const destination = resolveDestination(effective);
+    const country = destination.code, category = normalizeBusiness(effective.category);
+    const countryRecognized = !!country;
     const categoryRecognized = ['packaging', 'weee', 'battery'].includes(category);
     const period = parsePeriod(effective.period);
     const group = JSON.stringify([effective.customer?.trim() || '', effective.store?.trim() || '']);
     let outOfScope = false;
     if (excluded.has(row.id)) { outOfScope = true; add('info', 'manual-exclusion', '人工排除；原始记录保留。'); }
-    if (countryRecognized && country !== settings.country) { outOfScope = true; add('info', 'country-filter', `目的国家 ${country} 与所选国家不同，已排除。`); }
+    if (settings.country !== 'auto' && countryRecognized && country !== settings.country) { outOfScope = true; add('info', 'country-filter', `目的国家 ${country} 与所选国家不同，已排除。`); }
     if (categoryRecognized && category !== settings.business) { outOfScope = true; add('info', 'category-filter', `品类 ${category} 与所选业务不同，已排除。`); }
     if (settings.group && group !== settings.group && effective.customer && effective.store) { outOfScope = true; add('info', 'group-filter', '客户/店铺与当前数据组不同，已排除。'); }
     if (period && validSelection && (period[1] < selectedStart! || period[0] > selectedEnd!)) { outOfScope = true; add('info', 'period-filter', '报告期间与当前选择不重叠，已排除。'); }
@@ -80,8 +82,7 @@ export function calculate(input: DataRow[], settings: Settings, edits: Edit[], e
     if (!row.mappingConfirmed) add('block', 'mapping', '字段映射尚未人工确认。');
     if (!effective.customer?.trim() || !effective.store?.trim()) add('block', 'identity', '客户或店铺缺失，不能判断数据归属。');
     if (!settings.group) add('block', 'group', '请先选择一个客户/店铺数据组，不自动混合。');
-    if (!country) add('block', 'country', '目的国家缺失；商城站点不能替代目的国家。');
-    if (country && !countryRecognized) add('block', 'country-invalid', '目的国家格式无法确认，请填写ISO两位代码或支持的中文国家名。');
+    if (destination.message) add('block', destination.conflict ? 'country-conflict' : destination.missing ? 'country' : 'country-invalid', destination.message);
     if (!categoryRecognized) add('block', 'category', 'EPR品类缺失或无法识别；请明确为包装、电子电器或电池。');
     if (!period) add('block', 'period', '期间缺失或格式不明；请使用 YYYY-MM 或 YYYY-MM-DD/YYYY-MM-DD。');
     else if (validSelection && !outOfScope && (period[0] < selectedStart! || period[1] > selectedEnd!)) add('block', 'partial-period', '记录期间跨越所选范围，无法按比例拆分；请提供准确期间数据。');
@@ -208,7 +209,7 @@ export function calculate(input: DataRow[], settings: Settings, edits: Edit[], e
     if (row.status === 'excluded') continue;
     row.status = row.issues.some(i => i.severity === 'block') || (row.issues.some(i => i.severity === 'confirm') && !acknowledged.has(row.id)) ? 'pending' : 'included';
     if (row.status !== 'included' || row.kg === null || row.quantity === null) continue;
-    const v = row.effective, country = normalizeCountry(v.country), category = normalizeBusiness(v.category);
+    const v = row.effective, country = resolveDestination(v).code, category = normalizeBusiness(v.category);
     const material = v.material?.trim() || '未分类', customer = v.customer || '', store = v.store || '';
     const key = JSON.stringify([country, customer, store, category, material]);
     const summary = summaries.get(key) || { key, country, customer, store, category, material, quantity: '0', kg: '0', rowIds: [] };

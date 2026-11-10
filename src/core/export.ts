@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import { getRule } from './rules';
+import { resolveDestination } from './country';
 import { calculate } from './calculation';
 import Decimal from 'decimal.js';
 import { fields, type Calculation, type Edit, type Field, type Settings, type Sheet } from './types';
@@ -41,7 +42,7 @@ export function buildWorkbook(calculation:Calculation,sheets:Sheet[],edits:Edit[
   XLSX.utils.book_append_sheet(workbook,sheetFromRows(calculation.rows.map(row=>{
     const values:Record<string,unknown>={'记录 ID':row.id,'汇总键':summaryByRow.get(row.id)??'未纳入汇总','状态':statusNames[row.status],'来源文件':row.fileName,
       '工作表':row.sheetName,'原始行号':row.rowNumber,'计算数量':row.quantity??'未知','计算重量 kg':row.kg??'未知',
-      '计算公式及单位换算':row.formula,'人工修改':row.edited?'是':'否','异常':row.issues.map(i=>`${severityNames[i.severity]}：${i.message}`).join('\n')};
+      '识别目的国家':resolveDestination(row.effective).code||'待处理','目的国家取值字段':sheets.find(s=>s.id===row.sheetId)?.mapping[resolveDestination(row.effective).source as Field]||'未映射','计算公式及单位换算':row.formula,'人工修改':row.edited?'是':'否','异常':row.issues.map(i=>`${severityNames[i.severity]}：${i.message}`).join('\n')};
     for(const field of Object.keys(fields) as Field[]) {
       values[`原值·${fields[field]}`]=row.values[field]??'';
       values[`当前·${fields[field]}`]=row.effective[field]??'';
@@ -69,7 +70,7 @@ export function buildWorkbook(calculation:Calculation,sheets:Sheet[],edits:Edit[
     {'项目':'规则核验','值':'机构、年度、有效期、分类映射及官方来源均待配置；未核验'},
     {'项目':'生成时间 UTC','值':generatedAt},
     {'项目':'输出单位','值':'kg；内部十进制精确计算；Excel 数字字段按文本保存精确值'},
-    {'项目':'国家筛选','值':settings.country},{'项目':'业务筛选','值':settings.business},
+    {'项目':'国家筛选','值':settings.country==='auto'?'按报告目的国家逐行识别并分别汇总':settings.country},{'项目':'业务筛选','值':settings.business},
     {'项目':'开始期间','值':settings.start},{'项目':'结束期间','值':settings.end},
     {'项目':'客户／店铺筛选','值':settings.group||'未选择，不合并客户店铺'},
     {'项目':'退货口径','值':settings.returns},{'项目':'用户填写的计算依据','值':settings.basis},
@@ -88,10 +89,11 @@ export function buildWorkbook(calculation:Calculation,sheets:Sheet[],edits:Edit[
   XLSX.utils.book_append_sheet(workbook,sheetFromRows(rawRows),'原始数据');
   return workbook;
 }
-export function exportFileName(settings:Settings,extension:string):string {
+export function exportFileName(settings:Settings,extension:string,reportCountries:string[]=[]):string {
   const business=({packaging:'包装',weee:'电子电器',battery:'电池'} as Record<string,string>)[settings.business]||settings.business;
   const date=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai'}).format(new Date());
-  return `EPR_通用整理_${settings.country}_${business}_${settings.start||'期间待定'}_${settings.end||'期间待定'}_${date}.${extension}`.replace(/[\\/:*?"<>|]/g,'-');
+  const country=settings.country==='auto'?([...new Set(reportCountries)].sort().join('-')||'国家待定'):settings.country;
+  return `EPR_通用整理_${country}_${business}_${settings.start||'期间待定'}_${settings.end||'期间待定'}_${date}.${extension}`.replace(/[\\/:*?"<>|]/g,'-');
 }
 export function downloadBlob(blob:Blob,name:string):void {
   const url=URL.createObjectURL(blob);const anchor=document.createElement('a');anchor.href=url;anchor.download=name;
@@ -113,7 +115,7 @@ export async function downloadExcel(calculation:Calculation,sheets:Sheet[],edits
     try {worker.postMessage({calculation,sheets,edits,settings});}
     catch(error) {finish();reject(error instanceof Error?error:new Error('无法准备导出数据。'));}
   });
-  downloadBlob(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),exportFileName(settings,'xlsx'));
+  downloadBlob(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),exportFileName(settings,'xlsx',calculation.rows.map(r=>resolveDestination(r.effective).code).filter(Boolean)));
 }
 export function buildIssuesCsv(calculation:Calculation):string {
   const rowById=new Map(calculation.rows.map(row=>[row.id,row]));
@@ -124,5 +126,5 @@ export function buildIssuesCsv(calculation:Calculation):string {
   return '\uFEFF'+rows.map(row=>row.map(v=>'"'+safeCsvCell(v).replace(/"/g,'""')+'"').join(',')).join('\r\n');
 }
 export function downloadIssuesCsv(calculation:Calculation,settings:Settings):void {
-  downloadBlob(new Blob([buildIssuesCsv(calculation)],{type:'text/csv;charset=utf-8'}),exportFileName(settings,'csv').replace('通用整理','问题清单'));
+  downloadBlob(new Blob([buildIssuesCsv(calculation)],{type:'text/csv;charset=utf-8'}),exportFileName(settings,'csv',calculation.rows.map(r=>resolveDestination(r.effective).code).filter(Boolean)).replace('通用整理','问题清单'));
 }

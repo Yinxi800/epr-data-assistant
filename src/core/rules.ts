@@ -10,7 +10,7 @@ export const businesses = [
 ];
 export function getRule(settings: Settings) {
   return {
-    id: 'generic-preparation-v1', version: '通用整理 v1.0', country: settings.country,
+    id: 'generic-preparation-v1', version: '通用整理 v1.1', country: settings.country === 'auto' ? '按报告目的国家逐行分组' : settings.country,
     business: settings.business, agency: null, declarationYear: settings.start.slice(0, 4),
     effectiveFrom: null, effectiveTo: null, verifiedAt: null, sourceLinks: [] as string[],
     configured: false, status: '仅支持通用数据整理', declarationTypes: ['通用数据整理'],
@@ -20,9 +20,14 @@ export function getRule(settings: Settings) {
     outputUnit: 'kg', feesEnabled: false, institutionTemplate: null,
   };
 }
+const countryNames: Record<string,string> = {
+  germany:'DE', deutschland:'DE', france:'FR', spain:'ES', españa:'ES',
+  italy:'IT', italia:'IT', austria:'AT', österreich:'AT', netherlands:'NL', nederland:'NL', poland:'PL', polska:'PL',
+};
 export function normalizeCountry(value: string | undefined) {
   const input = (value || '').trim();
-  return countries.find(c => c.code === input.toUpperCase() || c.label === input)?.code || input;
+  return countries.find(c => c.code === input.toUpperCase() || c.label === input)?.code
+    || countryNames[input.toLowerCase()] || (/^[a-z]{2}$/i.test(input) ? input.toUpperCase() : input);
 }
 export function normalizeBusiness(value: string | undefined) {
   const input = (value || '').trim();

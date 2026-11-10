@@ -19,7 +19,7 @@ test('CSV 本地上传、100×50g 与总重5kg，导出与页面一致',async({p
  await page.getByLabel('我已复核当前纳入、排除记录及计算结果').check();await page.screenshot({path:'output/playwright/summary.png',fullPage:true});
  const wb=await downloadWorkbook(page);expect(wb.SheetNames).toEqual(['数据汇总','标准化明细','异常及缺失清单','人工修改记录','字段映射及计算口径','原始数据']);expect(sheetRows(wb,'数据汇总')[0]['重量 kg（精确值）']).toBe('10');expect(sheetRows(wb,'标准化明细').map(r=>r['计算重量 kg'])).toEqual(['5','5']);
  expect(requests.every(r=>r.method==='GET'&&!r.body&&new URL(r.url).origin==='http://127.0.0.1:4173')).toBe(true);expect(requests.some(r=>r.url.includes('parser.worker'))).toBe(true);
- await page.getByRole('button',{name:'口径与范围',exact:true}).first().click();await page.getByRole('combobox',{name:'国家',exact:true}).selectOption('FR');await page.locator('nav').getByRole('button',{name:/汇总与导出/}).click();await expect(page.getByLabel('我已复核当前纳入、排除记录及计算结果')).not.toBeChecked();await expect(page.getByText('尚无可纳入的记录。')).toBeVisible();
+ await page.getByRole('button',{name:'口径与范围',exact:true}).first().click();await page.getByText('可选：仅查看某个国家',{exact:true}).click();await page.getByRole('combobox',{name:'国家筛选（可选）',exact:true}).selectOption('FR');await page.locator('nav').getByRole('button',{name:/汇总与导出/}).click();await expect(page.getByLabel('我已复核当前纳入、排除记录及计算结果')).not.toBeChecked();await expect(page.getByText('尚无可纳入的记录。')).toBeVisible();
 });
 test('XLSX 上传与本地映射主动保存、清除',async({page})=>{
  await page.goto('/');await upload(page,path.resolve('public/samples/模拟数据_包装.xlsx'));await page.locator('nav').getByRole('button',{name:/字段映射/}).click();expect(await page.evaluate(()=>localStorage.getItem('epr-mapping-v1'))).toBeNull();await page.getByRole('button',{name:'主动保存此映射'}).click();expect(await page.evaluate(()=>localStorage.getItem('epr-mapping-v1'))).not.toBeNull();await page.getByLabel('我已核对本表字段映射与数字格式').check();await page.locator('nav').getByRole('button',{name:/口径与范围/}).click();await configure(page);await summary(page);await expect(page.locator('tbody tr').first().locator('td').nth(5)).toHaveText('10');page.once('dialog',dialog=>dialog.accept());await page.getByRole('button',{name:'清除数据与保存的映射'}).click();expect(await page.evaluate(()=>localStorage.getItem('epr-mapping-v1'))).toBeNull();await expect(page.getByText('已解析文件',{exact:true})).toHaveCount(0);
@@ -46,4 +46,21 @@ test('打包扩展独立打开并本地解析报告',async()=>{
 
 test('按引导顺序从导入到人工确认导出',async({page})=>{
  await page.goto('/');await upload(page);await page.getByRole('button',{name:'下一步：口径与范围'}).click();await expect(page.getByRole('heading',{name:'口径与范围',exact:true})).toBeVisible();await page.getByLabel('客户 / 店铺（不自动合并）').selectOption(group);await page.getByLabel('退货处理').selectOption('gross');await page.getByLabel('口径依据 / 人工确认说明').fill('模拟引导流程确认');await page.getByLabel('已核对本次纳入的包装层级').check();await page.getByLabel('已核对取消、跨境流转').check();await page.getByRole('button',{name:'下一步：字段映射'}).click();await page.getByLabel('我已核对本表字段映射与数字格式').check();await page.getByRole('button',{name:'下一步：异常检查'}).click();await summary(page);await page.getByLabel('我已复核当前纳入、排除记录及计算结果').check();const wb=await downloadWorkbook(page);expect(sheetRows(wb,'数据汇总')[0]['重量 kg（精确值）']).toBe('10');
+});
+
+
+test('亚马逊目的国字段自动读取，多国分别汇总且导出不按商城猜测',async({page})=>{
+ await page.goto('/');await expect(page.getByRole('heading',{name:'选择国家',exact:true})).toHaveCount(0);
+ await upload(page,path.resolve('public/samples/模拟数据_亚马逊国家字段.csv'));
+ const detection=page.getByRole('region',{name:'报告国家识别'});
+ await expect(detection).toContainText('德国（DE）');await expect(detection).toContainText('法国（FR）');
+ await map(page);await expect(page.getByText('默认按报告逐行识别并分别汇总，无需选择。',{exact:false})).toBeVisible();
+ await configure(page);await summary(page);
+ const summaries=page.locator('tbody tr');await expect(summaries).toHaveCount(2);
+ await expect(summaries.nth(0).locator('td').nth(0)).toHaveText('DE');await expect(summaries.nth(1).locator('td').nth(0)).toHaveText('FR');
+ await expect(summaries.nth(1).locator('td').nth(5)).toHaveText('5');
+ const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'导出未完成草稿'}).click();const file=await downloadPromise;
+ expect(file.suggestedFilename()).toContain('DE-FR_包装');const wb=XLSX.read(fs.readFileSync((await file.path())!));
+ expect(sheetRows(wb,'数据汇总').map(r=>r['国家'])).toEqual(['DE','FR']);expect(sheetRows(wb,'标准化明细')[1]['当前·商城站点']).toBe('amazon.de');
+ await page.screenshot({path:'output/playwright/multi-country-summary.png',fullPage:true});
 });

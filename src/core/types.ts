@@ -1,4 +1,4 @@
-export const fields = {customer:'客户',store:'店铺',period:'报告期间',country:'目的国家',marketplace:'商城站点',asin:'ASIN',sku:'SKU',name:'产品名称',brand:'品牌',sales:'销售数量',returns:'退货数量',category:'EPR品类',material:'包装材料',layer:'包装层级',weight:'重量',unit:'重量单位',weightMode:'重量含义',weightKind:'重量类型',channel:'履约渠道',source:'数据来源',estimated:'估算标记',cancelled:'取消数量',flow:'跨境流转',buyer:'B2B/B2C'} as const;
+export const fields = {customer:'客户',store:'店铺',period:'报告期间',country:'目的国家',countryName:'目的国家名称（辅助核对）',marketplace:'商城站点',asin:'ASIN',sku:'SKU',name:'产品名称',brand:'品牌',sales:'销售数量',returns:'退货数量',category:'EPR品类',material:'包装材料',layer:'包装层级',weight:'重量',unit:'重量单位',weightMode:'重量含义',weightKind:'重量类型',channel:'履约渠道',source:'数据来源',estimated:'估算标记',cancelled:'取消数量',flow:'跨境流转',buyer:'B2B/B2C'} as const;
 export type Field = keyof typeof fields;
 export type Values = Partial<Record<Field,string>>;
 export interface Sheet {id:string;fileId:string;fileName:string;hash:string;name:string;headers:string[];rows:Record<string,string>[];rowNumbers:number[];mapping:Partial<Record<Field,string>>;confirmed:boolean;enabled:boolean;duplicate:boolean;numberFormat:'dot'|'comma';}
