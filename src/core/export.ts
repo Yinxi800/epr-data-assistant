@@ -36,12 +36,12 @@ export function buildWorkbook(calculation:Calculation,sheets:Sheet[],edits:Edit[
   }
   XLSX.utils.book_append_sheet(workbook,sheetFromRows(calculation.summaries.map(s=>({
     '输出类型':'通用数据汇总（非正式申报文件）','国家':s.country,'客户':s.customer,'店铺':s.store,
-    '品类':s.category,'材料':s.material,'数量（精确值）':s.quantity,'重量 kg（精确值）':s.kg,
+    '品类':s.category,'原报告子分类':s.categoryDetail,'包装层级':s.layer,'材料':s.material,'数量（精确值）':s.quantity,'重量 kg（精确值）':s.kg,
     '汇总键':s.key,'来源记录数':s.rowIds.length,'来源记录 ID':s.rowIds.join('\n').length<=32767?s.rowIds.join('\n'):'详见标准化明细：按汇总键筛选，完整来源未截断',
   }))),'数据汇总');
   XLSX.utils.book_append_sheet(workbook,sheetFromRows(calculation.rows.map(row=>{
     const values:Record<string,unknown>={'记录 ID':row.id,'汇总键':summaryByRow.get(row.id)??'未纳入汇总','状态':statusNames[row.status],'来源文件':row.fileName,
-      '工作表':row.sheetName,'原始行号':row.rowNumber,'计算数量':row.quantity??'未知','计算重量 kg':row.kg??'未知',
+      '工作表':row.sheetName,'原始行号':row.rowNumber,'原始记录 ID':row.amazon?.sourceId||row.id,'转换版本':row.amazon?.version||'通用映射','重量来源列':row.amazon?.weightColumn||'','空白材料列（未知，未补零）':row.amazon?.blankMaterials.join('、')||'','计算数量':row.quantity??'未知','计算重量 kg':row.kg??'未知',
       '识别目的国家':resolveDestination(row.effective).code||'待处理','目的国家取值字段':sheets.find(s=>s.id===row.sheetId)?.mapping[resolveDestination(row.effective).source as Field]||'未映射','计算公式及单位换算':row.formula,'人工修改':row.edited?'是':'否','异常':row.issues.map(i=>`${severityNames[i.severity]}：${i.message}`).join('\n')};
     for(const field of Object.keys(fields) as Field[]) {
       values[`原值·${fields[field]}`]=row.values[field]??'';
@@ -69,6 +69,7 @@ export function buildWorkbook(calculation:Calculation,sheets:Sheet[],edits:Edit[
     {'项目':'完整规则配置','值':JSON.stringify(rule)},
     {'项目':'规则核验','值':'机构、年度、有效期、分类映射及官方来源均待配置；未核验'},
     {'项目':'生成时间 UTC','值':generatedAt},
+    {'项目':'原值说明','值':'标准化明细中的原值为字段转换后的初始值；完整未改动的输入列见原始数据；材料明细按来源文件、行号和重量来源列追溯'},
     {'项目':'输出单位','值':'kg；内部十进制精确计算；Excel 数字字段按文本保存精确值'},
     {'项目':'国家筛选','值':settings.country==='auto'?'按报告目的国家逐行识别并分别汇总':settings.country},{'项目':'业务筛选','值':settings.business},
     {'项目':'开始期间','值':settings.start},{'项目':'结束期间','值':settings.end},
@@ -76,6 +77,7 @@ export function buildWorkbook(calculation:Calculation,sheets:Sheet[],edits:Edit[
     {'项目':'退货口径','值':settings.returns},{'项目':'用户填写的计算依据','值':settings.basis},
     {'项目':'责任范围已确认','值':settings.scopeConfirmed?'是':'否'},
     {'项目':'取消／跨境／B2B/B2C 已确认','值':settings.specialConfirmed?'是':'否'},
+    ...sheets.filter(s=>s.amazon?.enabled).map(s=>({'项目':'亚马逊转换口径','文件':s.fileName,'值':'期间由起止列合并；EEE=TOTAL_REPORTED_WEIGHT_KG；包装按已填材料列拆分；本行总kg不乘数量；空白保持未知；账户/商城是分组范围，不等于实际客户店铺名称','转换口径已确认':s.amazon?.confirmed?'是':'否'})),
     ...Object.entries(calculation.counts).map(([k,v])=>({'项目':`记录数·${k}`,'值':String(v)})),
     ...sheets.flatMap(sheet=>Object.entries(sheet.mapping).map(([field,header])=>({
       '项目':'字段映射','值':header,'文件':sheet.fileName,'文件 SHA256':sheet.hash,'工作表':sheet.name,
@@ -87,6 +89,7 @@ export function buildWorkbook(calculation:Calculation,sheets:Sheet[],edits:Edit[
   const rawRows=sheets.flatMap(sheet=>sheet.rows.map((raw,index)=>({'文件':sheet.fileName,'文件 SHA256':sheet.hash,
     '工作表':sheet.name,'原始行号':sheet.rowNumbers[index],...Object.fromEntries(Object.entries(raw).map(([column,value])=>[`原始列·${column}`,value]))})));
   XLSX.utils.book_append_sheet(workbook,sheetFromRows(rawRows),'原始数据');
+  if(calculation.rows.some(r=>r.amazon)) XLSX.utils.book_append_sheet(workbook,sheetFromRows(calculation.quantityGroups.map(g=>({'国家':g.country,'客户或报告账户':g.customer,'店铺或商城范围':g.store,'业务':g.category,'包装层级':g.layer,'原始行数量':g.sourceRows,'数量（仅消除材料拆分重复）':g.quantity??'待核对','说明':'仅本组数量；不可跨业务或包装层级相加；空白材料仍为未知'}))),'原始行数量核对');
   return workbook;
 }
 export function exportFileName(settings:Settings,extension:string,reportCountries:string[]=[]):string {

@@ -78,3 +78,13 @@ test('月、季、整年、自定义期间，切换撤销复核且导出日期�
  const ready=page.waitForEvent('download');await page.getByRole('button',{name:'导出未完成草稿'}).click();expect((await ready).suggestedFilename()).toContain('2026-01-01_2026-12-31');
  await page.locator('nav').getByRole('button',{name:/口径与范围/}).click();await expect(page.getByLabel('时间段选择')).toHaveValue('year');await page.getByLabel('时间段选择').selectOption('custom');await page.getByLabel('开始日期').fill('2026-10-02');await expect(page.getByLabel('开始日期')).toHaveValue('2026-10-02');
 });
+
+test('亚马逊多材料转换，数量按层级核对，EEE总重与导出来源一致',async({page})=>{
+ await page.goto('/');await upload(page,path.resolve('tests/fixtures/模拟_亚马逊多材料.csv'));
+ await page.locator('nav').getByRole('button',{name:/字段映射/}).click();await expect(page.getByText('亚马逊 EPR 报告转换',{exact:true})).toBeVisible();await expect(page.getByLabel('映射报告期间')).toBeDisabled();await page.getByLabel('已核对亚马逊重量口径、账户归属和空白材料处理').check();await page.getByLabel('我已核对本表字段映射与数字格式').check();
+ await page.locator('nav').getByRole('button',{name:/口径与范围/}).click();await page.getByLabel('客户 / 店铺（不自动合并）').selectOption({index:1});await page.getByLabel('退货处理').selectOption('gross');await page.getByLabel('口径依据 / 人工确认说明').fill('合成测试：原报告总kg，仅汇总已填项，不另扣退货');await page.getByLabel('已核对本次纳入的包装层级').check();await page.getByLabel('已核对取消、跨境流转').check();
+ await page.locator('nav').getByRole('button',{name:/汇总与导出/}).click();const quantities=page.getByRole('region',{name:'原始行数量核对'});await expect(quantities).toContainText('初级包装：10 件');await expect(quantities).toContainText('运输包装：10 件');
+ const wb=await downloadWorkbook(page);const summaries=sheetRows(wb,'数据汇总');expect(summaries.find(r=>r['包装层级']==='初级包装'&&r['材料']==='纸')?.['重量 kg（精确值）']).toBe('1.25');expect(sheetRows(wb,'原始数据')).toHaveLength(3);expect(sheetRows(wb,'标准化明细')).toHaveLength(15);expect(sheetRows(wb,'原始行数量核对').map(r=>r['数量（仅消除材料拆分重复）'])).toEqual(['10','10']);
+ await page.getByLabel('我已复核当前纳入、排除记录及计算结果').check();await page.locator('nav').getByRole('button',{name:/口径与范围/}).click();await page.getByRole('combobox',{name:'业务类型',exact:true}).selectOption('weee');await page.locator('nav').getByRole('button',{name:/汇总与导出/}).click();await expect(page.locator('tbody tr').first().locator('td').nth(5)).toHaveText('7.125');await expect(quantities).toContainText('10 件');await expect(page.getByLabel('我已复核当前纳入、排除记录及计算结果')).not.toBeChecked();
+ await page.locator('nav').getByRole('button',{name:/字段映射/}).click();await page.getByLabel('已核对亚马逊重量口径、账户归属和空白材料处理').uncheck();await page.locator('nav').getByRole('button',{name:/汇总与导出/}).click();await expect(page.getByText('尚无可纳入的记录。')).toBeVisible();
+});

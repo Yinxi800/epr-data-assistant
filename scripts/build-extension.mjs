@@ -1,5 +1,6 @@
-import {cp,mkdir,writeFile,readFile} from 'node:fs/promises';
+import {cp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
 await mkdir('extension-dist',{recursive:true});
+await rm('extension-dist/app',{recursive:true,force:true});
 await cp('dist','extension-dist/app',{recursive:true});
 await cp('extension','extension-dist',{recursive:true});
 let html=await readFile('extension-dist/app/index.html','utf8');

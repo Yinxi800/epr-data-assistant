@@ -8,7 +8,7 @@ const parse=(s:string)=>parseBuffer(buffer(s),'模拟.csv','file-1','hash');
 const settings:Settings={country:'DE',business:'packaging',start:'2026-10-01',end:'2026-10-31',returns:'gross',basis:'用户确认销售数量，不扣退货',scopeConfirmed:true,specialConfirmed:true,group:'["模拟客户","模拟店铺"]',reviewed:false};
 function calculation():Calculation {
   const row:ResultRow={id:'row1',sheetId:'sheet1',fileId:'file1',fileName:'=HYPERLINK("https://bad")',sheetName:'模拟',rowNumber:2,raw:{'重量':'50','名称':'=1+1'},values:{weight:'50',name:'=1+1'},effective:{weight:'60',name:'=1+1'},numberFormat:'dot',mappingConfirmed:true,duplicateFile:false,quantity:'100',kg:'6',formula:'100 × 60 × 0.001 = 6 kg',issues:[{rowId:'row1',severity:'info',code:'edited',message:'人工修改'}],status:'included',edited:true};
-  return {rows:[row],issues:row.issues,summaries:[{key:'a',country:'DE',customer:'模拟客户',store:'模拟店铺',category:'包装',material:'纸',quantity:'100',kg:'6',rowIds:['row1']}],counts:{imported:1,included:1,excluded:0,pending:0}};
+  return {quantityGroups:[],rows:[row],issues:row.issues,summaries:[{key:'a',layer:'',categoryDetail:'',country:'DE',customer:'模拟客户',store:'模拟店铺',category:'包装',material:'纸',quantity:'100',kg:'6',rowIds:['row1']}],counts:{imported:1,included:1,excluded:0,pending:0}};
 }
 describe('local parser',()=>{
   it('keeps source text and physical row numbers, does not confirm inferred mappings',()=>{

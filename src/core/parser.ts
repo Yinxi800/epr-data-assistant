@@ -1,4 +1,5 @@
 import Papa from 'papaparse';
+import {isAmazonReport,amazonDetailCount} from './amazon';
 import * as XLSX from 'xlsx';
 import * as cptable from 'xlsx/dist/cpexcel.full.mjs';
 import {decodeText,type CsvEncoding} from './encoding';
@@ -10,8 +11,8 @@ export const ROW_LIMIT = 20000;
 const aliases: Partial<Record<Field, string[]>> = {
   customer:['customer','customer name','client'], store:['store','store name','seller'],
   period:['report period','reporting period','period'], country:['destination country','destination country code','ship to country code','ship to country'], countryName:['ship to country','destination country name'],
-  marketplace:['marketplace','marketplace id','amazon marketplace'], asin:['asin'],sku:['sku','seller sku'],name:['product name','item name'],
-  brand:['brand'],sales:['sales quantity','quantity sold','units sold'],returns:['return quantity','returns quantity'],
+  marketplace:['marketplace','marketplace id','amazon marketplace'], asin:['asin'],sku:['sku','seller sku'],name:['product name','item name','item name as in marketplace'],
+  brand:['brand'],sales:['sales quantity','quantity sold','units sold','total units sold'],returns:['return quantity','returns quantity'],
   category:['epr category','epr type'],material:['packaging material','material'],layer:['packaging layer'],
   weight:['weight'],unit:['weight unit','unit of weight'],weightMode:['weight basis','weight mode'],
   weightKind:['weight type','weight kind'],channel:['fulfillment channel','fulfilment channel'],source:['data source'],
@@ -46,7 +47,7 @@ function matrixToSheet(matrix:unknown[][],name:string,fileName:string,fileId:str
   }
   if(!rows.length) throw new Error(`工作表“${name}”只有表头，没有数据。`);
   if(rows.length>ROW_LIMIT) throw new Error(`单个文件最多 ${ROW_LIMIT.toLocaleString()} 条记录，请拆分文件。`);
-  return {id:`${fileId}:${index}`,fileId,fileName,hash,name,headers,rows,rowNumbers,mapping:inferMapping(headers),confirmed:false,enabled:true,duplicate:false,numberFormat:'dot'};
+  return {amazon:isAmazonReport(headers)?{enabled:true,confirmed:false}:undefined,id:`${fileId}:${index}`,fileId,fileName,hash,name,headers,rows,rowNumbers,mapping:inferMapping(headers),confirmed:false,enabled:true,duplicate:false,numberFormat:'dot'};
 }
 export function parseBuffer(buffer:ArrayBuffer,fileName:string,fileId:string,hash:string,encoding:CsvEncoding='auto'):Sheet[] {
   if(buffer.byteLength>FILE_LIMIT) throw new Error('文件超过 10 MB，请拆分后重试。');
@@ -64,7 +65,9 @@ export function parseBuffer(buffer:ArrayBuffer,fileName:string,fileId:string,has
     const errors=parseErrors.filter(e=>e.code!=='UndetectableDelimiter');
     if(errors.length) throw new Error(`CSV 格式错误：${errors[0].message}。请检查引号和分隔符。`);
     const {text,...metadata}=decoded;
-    return [{...matrixToSheet(matrix,extension!.toUpperCase(),fileName,fileId,hash,0,sourceRowNumbers),...metadata}];
+    const sheet={...matrixToSheet(matrix,extension!.toUpperCase(),fileName,fileId,hash,0,sourceRowNumbers),...metadata};
+    if(amazonDetailCount(sheet)>ROW_LIMIT)throw new Error('材料拆分后超过 20,000 条计算明细，请拆分报告。');
+    return [sheet];
   }
   if(!['xlsx','xls','ods'].includes(extension||'')) throw new Error('支持 CSV、TSV、TXT、XLSX、XLS 和 ODS 文件，不支持含宏文件。');
   const signature=new Uint8Array(buffer);
@@ -86,7 +89,7 @@ export function parseBuffer(buffer:ArrayBuffer,fileName:string,fileId:string,has
     }
     const matrix=XLSX.utils.sheet_to_json<unknown[]>(worksheet,{header:1,raw:false,defval:'',blankrows:true,range:0});
     const sheet=matrixToSheet(matrix,name,fileName,fileId,hash,index);
-    total+=sheet.rows.length;
+    total+=amazonDetailCount(sheet);
     if(total>ROW_LIMIT) throw new Error('单个文件所有工作表合计最多 20,000 条记录，请拆分文件。');
     return sheet;
   });

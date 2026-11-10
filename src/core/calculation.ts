@@ -1,4 +1,5 @@
 import Decimal from 'decimal.js';
+import {expandAmazonRow} from './amazon';
 import type { Calculation, DataRow, Edit, Field, Issue, ResultRow, Settings, Sheet, Summary, Values } from './types';
 import { normalizeBusiness } from './rules';
 import { resolveDestination } from './country';
@@ -36,13 +37,13 @@ export function parsePeriod(value: string | undefined): [string, string] | null 
   return null;
 }
 export function normalizeRows(sheets: Sheet[]): DataRow[] {
-  return sheets.filter(sheet => sheet.enabled).flatMap(sheet => sheet.rows.map((raw, i) => {
+  return sheets.filter(sheet => sheet.enabled).flatMap(sheet => sheet.rows.flatMap((raw, i) => {
     const values: Values = {};
     for (const [field, header] of Object.entries(sheet.mapping)) if (header) values[field as Field] = raw[header] ?? '';
     const rowNumber = sheet.rowNumbers[i] ?? i + 2;
-    return { id: `${sheet.id}:${rowNumber}`, sheetId: sheet.id, fileId: sheet.fileId, fileName: sheet.fileName,
+    return expandAmazonRow({ id: `${sheet.id}:${rowNumber}`, sheetId: sheet.id, fileId: sheet.fileId, fileName: sheet.fileName,
       sheetName: sheet.name, rowNumber, raw, values, numberFormat: sheet.numberFormat,
-      mappingConfirmed: sheet.confirmed, duplicateFile: sheet.duplicate };
+      mappingConfirmed: sheet.confirmed, duplicateFile: sheet.duplicate },sheet);
   }));
 }
 const unitFactor: Record<string, string> = { g: '0.001', kg: '1', t: '1000' };
@@ -79,6 +80,10 @@ export function calculate(input: DataRow[], settings: Settings, edits: Edit[], e
     if (settings.group && group !== settings.group && effective.customer && effective.store) { outOfScope = true; add('info', 'group-filter', '客户/店铺与当前数据组不同，已排除。'); }
     if (period && validSelection && (period[1] < selectedStart! || period[0] > selectedEnd!)) { outOfScope = true; add('info', 'period-filter', '报告期间与当前选择不重叠，已排除。'); }
     if (!validSelection) add('block', 'selection-period', '请选择有效的起止期间。');
+    if (row.amazon && !row.amazon.confirmed) add('block','amazon-basis','请在字段映射页确认亚马逊转换口径、报告账户归属及空白材料列处理。');
+    if (row.amazon && category==='weee' && !effective.categoryDetail?.trim()) add('confirm','amazon-classification','原报告缺少 EEE 子分类，请核对；不会推断机构分类。');
+    if (row.amazon?.blankMaterials.length) add('info','amazon-blank-materials',`仅汇总已填材料，空白列保留未知、不补零：${row.amazon.blankMaterials.join('、')}`);
+    if (row.amazon) add('info','amazon-source',`原报告 ${row.amazon.originalCategory}；取 ${row.amazon.weightColumn} 本行汇总 kg，不乘销量；估算状态以原报告为准。`);
     if (!row.mappingConfirmed) add('block', 'mapping', '字段映射尚未人工确认。');
     if (!effective.customer?.trim() || !effective.store?.trim()) add('block', 'identity', '客户或店铺缺失，不能判断数据归属。');
     if (!settings.group) add('block', 'group', '请先选择一个客户/店铺数据组，不自动混合。');
@@ -102,7 +107,7 @@ export function calculate(input: DataRow[], settings: Settings, edits: Edit[], e
     if (effective.cancelled?.trim() && (cancelled === null || new Decimal(cancelled).isNegative() || !new Decimal(cancelled).isInteger())) add('block', 'cancelled', '取消数量格式不明、为负数或非整数。');
     if (weight === null) add('block', 'weight', '重量缺失或数字格式不明；结果为未知，不补零。');
     else if (new Decimal(weight).isNegative()) add('block', 'negative-weight', '重量为负数，请核实。');
-    else if (new Decimal(weight).isZero()) add('confirm', 'zero-weight', '重量为零，请核实是否为明确测量结果。');
+    else if (new Decimal(weight).isZero()) add(row.amazon?'info':'confirm', 'zero-weight', '重量为零，请核实是否为明确测量结果。');
     const unit = effective.unit?.trim().toLowerCase() || '';
     if (!unitFactor[unit]) add('block', 'unit', '重量单位缺失或不支持；需明确为 g、kg 或 t。');
     const mode = effective.weightMode?.trim().toLowerCase() || '';
@@ -204,6 +209,9 @@ export function calculate(input: DataRow[], settings: Settings, edits: Edit[], e
     if (overlaps.has(row.id)) issue(row, 'period-overlap', '同一客户/店铺的多个文件期间重叠，请确认是否分批、重复或不同责任范围。');
     if (identityGroups.size > 1) row.issues.push({ rowId: row.id, severity: 'info', code: 'mixed-identities', message: `检测到 ${identityGroups.size} 个客户/店铺数据组；仅纳入当前选择的数据组，其余记录保留并排除，未自动合并。` });
   }
+  const siblings=new Map<string,ResultRow[]>();
+  for(const row of rows)if(row.amazon&&row.status!=='excluded')siblings.set(row.amazon.sourceId,[...(siblings.get(row.amazon.sourceId)||[]),row]);
+  for(const group of siblings.values())if(new Set(group.map(r=>r.quantity)).size>1)for(const row of group)row.issues.push({rowId:row.id,severity:'block',code:'amazon-sibling-quantity',message:'同一原始行的材料明细数量不一致，请统一核对数量修改；不按材料重复累计。'});
   const summaries = new Map<string, Summary>();
   for (const row of rows) {
     if (row.status === 'excluded') continue;
@@ -211,10 +219,16 @@ export function calculate(input: DataRow[], settings: Settings, edits: Edit[], e
     if (row.status !== 'included' || row.kg === null || row.quantity === null) continue;
     const v = row.effective, country = resolveDestination(v).code, category = normalizeBusiness(v.category);
     const material = v.material?.trim() || '未分类', customer = v.customer || '', store = v.store || '';
-    const key = JSON.stringify([country, customer, store, category, material]);
-    const summary = summaries.get(key) || { key, country, customer, store, category, material, quantity: '0', kg: '0', rowIds: [] };
+    const layer=v.layer?.trim()||'',categoryDetail=v.categoryDetail?.trim()||'';
+    const key = JSON.stringify([country, customer, store, category, material,layer,categoryDetail]);
+    const summary = summaries.get(key) || { key, country, customer, store, category, material,layer,categoryDetail, quantity: '0', kg: '0', rowIds: [] };
     summary.quantity = new Decimal(summary.quantity).plus(row.quantity).toFixed();
     summary.kg = new Decimal(summary.kg).plus(row.kg).toFixed(); summary.rowIds.push(row.id); summaries.set(key, summary);
   }
-  return { rows, issues: rows.flatMap(r => r.issues), summaries: [...summaries.values()], counts: { imported: rows.length, included: rows.filter(r => r.status === 'included').length, excluded: rows.filter(r => r.status === 'excluded').length, pending: rows.filter(r => r.status === 'pending').length } };
+  // Quantity totals are per business/layer. Only material expansion siblings share a source ID.
+  // Genuine duplicate source rows remain separate and retain duplicate/overlap checks.
+  const quantityMap=new Map<string,{country:string;customer:string;store:string;category:string;layer:string;sources:Map<string,ResultRow[]>}>();
+  for(const row of rows){if(row.status==='excluded')continue;const v=row.effective;const country=resolveDestination(v).code,category=normalizeBusiness(v.category),customer=v.customer||'',store=v.store||'',layer=v.layer||'';const key=JSON.stringify([country,customer,store,category,layer]);const group=quantityMap.get(key)||{country,customer,store,category,layer,sources:new Map<string,ResultRow[]>()};const source=row.amazon?.sourceId||row.id;group.sources.set(source,[...(group.sources.get(source)||[]),row]);quantityMap.set(key,group);}
+  const quantityGroups=[...quantityMap.values()].map(({sources,...group})=>{let quantity=new Decimal(0),complete=true;for(const siblings of sources.values()){const amounts=new Set(siblings.map(r=>r.quantity));if(siblings.some(r=>r.status!=='included')||amounts.size!==1||siblings[0].quantity===null){complete=false;continue;}quantity=quantity.plus(siblings[0].quantity!);}return {...group,quantity:complete?quantity.toFixed():null,sourceRows:sources.size,complete};});
+  return { quantityGroups,rows, issues: rows.flatMap(r => r.issues), summaries: [...summaries.values()], counts: { imported: rows.length, included: rows.filter(r => r.status === 'included').length, excluded: rows.filter(r => r.status === 'excluded').length, pending: rows.filter(r => r.status === 'pending').length } };
 }
