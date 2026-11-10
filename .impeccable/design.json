@@ -1,24 +1,249 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-10T09:29:08.245518+00:00",
+  "generatedAt": "2026-11-10T10:56:00.210872+00:00",
   "title": "Design System: EPR申报数据助手",
   "extensions": {
-    "source": "src/style.css; DESIGN.md preserved",
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "primary",
+        "tonalRamp": [
+          "#192333",
+          "#1d3662",
+          "#294c89",
+          "#3561b1",
+          "#6289d0",
+          "#9db6e2",
+          "#ccd9f0",
+          "#eef1f7"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "primary-hover",
+        "tonalRamp": [
+          "#182035",
+          "#1a3066",
+          "#24438f",
+          "#2e56b7",
+          "#5c7fd6",
+          "#99afe5",
+          "#cad5f2",
+          "#edf0f7"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "text",
+        "tonalRamp": [
+          "#1e252e",
+          "#2a3b55",
+          "#3b5377",
+          "#4c6b99",
+          "#7792bb",
+          "#aabbd5",
+          "#d3dce9",
+          "#f0f2f5"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "muted",
+        "tonalRamp": [
+          "#23262a",
+          "#373f49",
+          "#4d5866",
+          "#637183",
+          "#8b97a7",
+          "#b6bec8",
+          "#d9dde2",
+          "#f1f2f3"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "surface",
+        "tonalRamp": [
+          "#262626",
+          "#404040",
+          "#595959",
+          "#737373",
+          "#999999",
+          "#bfbfbf",
+          "#dedede",
+          "#f2f2f2"
+        ]
+      },
+      "canvas": {
+        "role": "neutral",
+        "displayName": "canvas",
+        "tonalRamp": [
+          "#21252c",
+          "#313d4f",
+          "#44556e",
+          "#586d8e",
+          "#8194b1",
+          "#b0bcce",
+          "#d6dce6",
+          "#f0f2f4"
+        ]
+      },
+      "rail": {
+        "role": "neutral",
+        "displayName": "rail",
+        "tonalRamp": [
+          "#1e252f",
+          "#293e56",
+          "#3a5679",
+          "#4a6f9b",
+          "#7596bd",
+          "#a9bdd6",
+          "#d2ddea",
+          "#eff2f5"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "line",
+        "tonalRamp": [
+          "#20252c",
+          "#303d50",
+          "#43556f",
+          "#566e8f",
+          "#8095b2",
+          "#afbccf",
+          "#d6dce6",
+          "#f0f2f4"
+        ]
+      },
+      "table-head": {
+        "role": "neutral",
+        "displayName": "table-head",
+        "tonalRamp": [
+          "#1e262e",
+          "#2a4055",
+          "#3b5977",
+          "#4c7399",
+          "#7799bb",
+          "#aabfd4",
+          "#d3dee9",
+          "#f0f2f5"
+        ]
+      },
+      "product-cell": {
+        "role": "neutral",
+        "displayName": "product-cell",
+        "tonalRamp": [
+          "#1e242e",
+          "#2a3856",
+          "#3b4f78",
+          "#4b669a",
+          "#768dbc",
+          "#a9b8d5",
+          "#d2dae9",
+          "#f0f1f5"
+        ]
+      },
+      "active-nav": {
+        "role": "neutral",
+        "displayName": "active-nav",
+        "tonalRamp": [
+          "#1b2532",
+          "#223b5e",
+          "#2f5383",
+          "#3d6aa9",
+          "#6992c9",
+          "#a1bbdd",
+          "#cedbee",
+          "#eef2f6"
+        ]
+      },
+      "warn-bg": {
+        "role": "neutral",
+        "displayName": "warn-bg",
+        "tonalRamp": [
+          "#392d13",
+          "#73530d",
+          "#a17412",
+          "#cf9517",
+          "#ebb747",
+          "#f2d28c",
+          "#f8e8c3",
+          "#f9f5ec"
+        ]
+      },
+      "warn-text": {
+        "role": "neutral",
+        "displayName": "warn-text",
+        "tonalRamp": [
+          "#342918",
+          "#66461a",
+          "#8e6224",
+          "#b77f2f",
+          "#d6a45c",
+          "#e5c699",
+          "#f2e1ca",
+          "#f7f3ee"
+        ]
+      },
+      "error": {
+        "role": "neutral",
+        "displayName": "error",
+        "tonalRamp": [
+          "#311b1b",
+          "#5d2323",
+          "#823131",
+          "#a73f3f",
+          "#c76b6b",
+          "#dca2a2",
+          "#edcfcf",
+          "#f6efef"
+        ]
+      },
+      "focus": {
+        "role": "neutral",
+        "displayName": "focus",
+        "tonalRamp": [
+          "#161f37",
+          "#142c6b",
+          "#1c3e96",
+          "#2450c1",
+          "#537adf",
+          "#94aceb",
+          "#c7d4f5",
+          "#edf0f8"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "页面标题",
+        "purpose": "报告解析与高级工作台标题。"
+      },
+      "table": {
+        "displayName": "表格正文",
+        "purpose": "分类、数量与材料重量；数字使用 tabular-nums。"
+      }
+    },
     "shadows": [
       {
         "name": "detail-drawer",
         "value": "-8px 0 30px #10244320",
-        "purpose": "明细抽屉浮层"
+        "purpose": "仅高级明细抽屉使用。"
       }
     ],
     "motion": [
       {
         "name": "button-background",
         "value": "background .15s",
-        "purpose": "按钮悬停反馈；减少动态效果偏好下关闭"
+        "purpose": "按钮悬停；prefers-reduced-motion 时关闭。"
       }
     ],
     "breakpoints": [
+      {
+        "name": "wide",
+        "value": "1700px"
+      },
       {
         "name": "compact-desktop",
         "value": "1100px"
@@ -27,74 +252,92 @@
         "name": "mobile",
         "value": "750px"
       }
-    ],
-    "implementationMapping": {
-      "primary": "--blue: #2457d6",
-      "text": "#18263b",
-      "secondaryText": "--muted: #526174",
-      "background": "#f5f7fb",
-      "border": "--line: #dbe2ec",
-      "body": "14px, line-height 1.6, system Chinese sans-serif",
-      "heading": "28px, weight 700; mobile 25px",
-      "panel": "24px padding, 20px bottom gap, 10px radius",
-      "desktop": "232px fixed sidebar; main 32px 40px padding",
-      "mobile": "16px horizontal main padding; single-column form; horizontal table scroll"
-    }
+    ]
   },
   "components": [
     {
       "name": "主操作按钮",
       "kind": "button",
+      "refersTo": "button-primary",
       "description": "主操作按钮",
-      "html": "<button class=\"ds-primary\">导出通用准备数据</button>",
-      "css": ".ds-primary{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;font-size:14px;background:var(--blue,#2457d6);color:#fff;border:1px solid var(--blue,#2457d6);padding:8px 14px;border-radius:7px;cursor:pointer;transition:background .15s}.ds-primary:hover{background:#1944ae}.ds-primary:focus-visible{outline:3px solid #7296f4;outline-offset:3px}.ds-primary:disabled{opacity:.45;cursor:not-allowed}"
+      "html": "<button class=\"ds-primary\">查看报告</button>",
+      "css": ".ds-primary{font-family:-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;font-size:14px;background:var(--blue,#2459b8);color:#fff;border:1px solid var(--line,#dbe2ec);padding:8px 14px;border-radius:7px;cursor:pointer;transition:background .15s}.ds-primary:hover{background:#1944ae}.ds-primary:focus-visible{outline:3px solid var(--focus,#7296f4);outline-offset:3px}.ds-primary:disabled{opacity:.45;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}"
+    },
+    {
+      "name": "次操作按钮",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "次操作按钮",
+      "html": "<button class=\"ds-secondary\">查看报告</button>",
+      "css": ".ds-secondary{font-family:-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;font-size:14px;background:#fff;color:#263750;border:1px solid var(--line,#dbe2ec);padding:8px 14px;border-radius:7px;cursor:pointer;transition:background .15s}.ds-secondary:hover{background:#f0f4fb}.ds-secondary:focus-visible{outline:3px solid var(--focus,#7296f4);outline-offset:3px}.ds-secondary:disabled{opacity:.45;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}}"
     },
     {
       "name": "文字操作按钮",
       "kind": "button",
+      "refersTo": "button-text",
       "description": "文字操作按钮",
-      "html": "<button class=\"ds-text\">载入模拟数据</button>",
-      "css": ".ds-text{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;font-size:14px;background:transparent;border:none;color:var(--blue,#2457d6);padding:4px;cursor:pointer}.ds-text:hover{background:#f0f4fb}.ds-text:focus-visible{outline:3px solid #7296f4;outline-offset:3px}"
+      "html": "<button class=\"ds-text\">查看报告</button>",
+      "css": ".ds-text{font-family:-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;font-size:14px;background:transparent;color:var(--blue,#2459b8);border:1px solid transparent;padding:8px 14px;border-radius:7px;cursor:pointer;transition:background .15s}.ds-text:hover{background:#f0f4fb}.ds-text:focus-visible{outline:3px solid var(--focus,#7296f4);outline-offset:3px}.ds-text:disabled{opacity:.45;cursor:not-allowed}@media(prefers-reduced-motion:reduce){.ds-text{transition:none}}"
     },
     {
-      "name": "输入框",
+      "name": "标准输入框",
       "kind": "input",
-      "description": "输入框",
-      "html": "<label class=\"ds-field\">口径依据<input aria-label=\"口径依据\" value=\"人工确认说明\"></label>",
-      "css": ".ds-field{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;font-size:14px;display:flex;flex-direction:column;gap:7px;color:#18263b}.ds-field input{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;font-size:14px;color:#18263b;background:#fff;border:1px solid #b9c5d6;border-radius:6px;padding:9px 11px;caret-color:var(--blue,#2457d6)}.ds-field input:focus-visible{outline:3px solid #7296f4;outline-offset:3px}"
+      "refersTo": "input",
+      "description": "标准输入框",
+      "html": "<label class=\"ds-field\">口径依据<input value=\"人工确认说明\"></label>",
+      "css": ".ds-field{font-family:-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;font-size:14px;display:flex;flex-direction:column;gap:7px;color:#18263b}.ds-field input{font-family:-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;font-size:14px;padding:9px 11px;border:1px solid #b9c5d6;border-radius:6px;background:#fff;color:#18263b}.ds-field input:focus-visible{outline:3px solid var(--focus,#7296f4);outline-offset:3px}"
     },
     {
-      "name": "当前步骤导航",
+      "name": "当前步骤",
       "kind": "nav",
-      "description": "当前步骤导航",
+      "refersTo": "nav-active",
+      "description": "当前步骤",
       "html": "<button class=\"ds-nav\" aria-current=\"step\">口径与范围</button>",
-      "css": ".ds-nav{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;font-size:14px;background:#eaf0ff;color:#1949bf;font-weight:650;border:0;border-radius:7px;padding:12px 14px;cursor:pointer}.ds-nav:hover{background:#f0f4fb}.ds-nav:focus-visible{outline:3px solid #7296f4;outline-offset:3px}"
+      "css": ".ds-nav{font-family:-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;font-size:14px;font-size:13px;background:#dce7f6;color:#173f79;border:0;border-radius:5px;padding:12px 10px;font-weight:650;cursor:pointer}.ds-nav:hover{background:#f0f4fb}.ds-nav:focus-visible{outline:3px solid var(--focus,#7296f4);outline-offset:3px}"
     },
     {
-      "name": "待复核状态",
+      "name": "待复核标签",
       "kind": "chip",
-      "description": "待复核状态",
+      "refersTo": "tag-warn",
+      "description": "待复核标签",
       "html": "<span class=\"ds-tag\">数据待复核</span>",
-      "css": ".ds-tag{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;font-size:14px;font-size:11px;display:inline-block;padding:3px 8px;background:#fff3d9;color:#805313;border-radius:4px}"
+      "css": ".ds-tag{font-family:-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;font-size:14px;font-size:11px;display:inline-block;padding:3px 8px;background:#fff3d9;color:#805313;border-radius:4px}"
     },
     {
-      "name": "工作区块",
+      "name": "准备工作区块",
       "kind": "card",
-      "description": "工作区块",
-      "html": "<section class=\"ds-panel\"><h2>选择国家</h2><p>选择目的国，不以商城站点代替</p></section>",
-      "css": ".ds-panel{font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",\"PingFang SC\",\"Microsoft YaHei\",sans-serif;font-size:14px;background:#fff;color:#18263b;border:1px solid var(--line,#dbe2ec);padding:24px;border-radius:10px}.ds-panel h2{font-size:17px;font-weight:650;margin:0 0 18px}.ds-panel p{font-size:12px;color:var(--muted,#526174);margin:0}"
+      "refersTo": "panel",
+      "description": "准备工作区块",
+      "html": "<section class=\"ds-panel\"><h2>整理范围</h2><p>按报告目的国家分别汇总</p></section>",
+      "css": ".ds-panel{font-family:-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;font-size:14px;background:#fff;color:#18263b;border:1px solid var(--line,#dbe2ec);padding:24px;border-radius:6px}.ds-panel h2{font-size:17px;font-weight:650;margin:0 0 18px}.ds-panel p{font-size:12px;color:var(--muted,#526174);margin:0}"
+    },
+    {
+      "name": "产品分组单元格",
+      "kind": "custom",
+      "refersTo": "product-cell",
+      "description": "产品分组单元格",
+      "html": "<table class=\"ds-table\"><tbody><tr><td rowspan=\"2\" class=\"ds-product\"><strong>示例产品</strong><small>SKU-001</small></td><td>包装 · 初级包装</td><td>12.500</td></tr><tr><td>电子电器</td><td>85.000</td></tr></tbody></table>",
+      "css": ".ds-table{font-family:-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif;font-size:14px;font-size:12px;border-collapse:collapse;width:100%;color:#18263b;font-variant-numeric:tabular-nums}.ds-table td{padding:16px 12px;border-bottom:1px solid #e3e9f0;vertical-align:top}.ds-table td:last-child{text-align:right}.ds-table .ds-product{width:220px;background:#fafbfd}.ds-product strong{font-size:13px;font-weight:600}.ds-product small{display:block;margin-top:10px;color:#506a8a}"
     }
   ],
   "narrative": {
-    "overview": "用户已指定白底蓝色中文后台及引导流程，本版直接实现可操作页面。",
+    "northStar": "清晰的贸易目录",
+    "overview": "以贸易目录的清晰分组组织报告：白色主工作区承载表格，浅蓝文件栏承载文件上下文。中文系统字体、对齐的数字和细分隔线建立可信、克制的阅读节奏。\n\n默认解析视图与高级准备工作台共用白蓝色彩和经典控件；前者强调直接阅读，后者保留步骤导航和必要确认。颜色始终配合文字说明状态。",
     "keyCharacteristics": [
-      "桌面操作优先，左侧步骤导航、主区表格和右上本地会话标记。",
-      "深蓝主操作，琥珀色待复核，红色阻止计算；文字说明与颜色同时表达状态。"
+      "白色主区与浅蓝侧栏，桌面优先。",
+      "紧凑表格、产品分组合并单元格、等宽数字。",
+      "经典按钮、输入框和下划线页签；无装饰性卡片堆叠。"
     ],
     "rules": [],
-    "dos": [],
+    "dos": [
+      "Do 使用明确文字解释未知、待复核与阻止项。",
+      "Do 保留产品分组、材料明细、来源入口和数字对齐。",
+      "Do 在窄屏让表格横向滚动，并保留可见键盘焦点。"
+    ],
     "donts": [
-      "不使用合规通过或正式申报完成措辞。规则未配置必须持续可见。"
+      "Don't 用颜色单独表达状态或把未知值显示为零。",
+      "Don't 将报告解析或通用准备数据标为正式申报完成或合规通过。",
+      "Don't 为默认阅读页增加重复步骤导航、装饰渐变或卡片网格。"
     ]
   }
 }
