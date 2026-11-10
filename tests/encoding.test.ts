@@ -10,3 +10,10 @@ for(const name of ['模拟_GBK.csv','模拟_UTF16LE.csv','模拟_UTF16BE.csv','�
 it('西欧编码可手动解码而非无条件自动猜测',()=>{const b=Uint8Array.from([0x6e,0x61,0x6d,0x65,10,0x63,0x61,0x66,0xe9]).buffer;expect(decodeText(b,'windows-1252').text).toBe('name\ncafé');expect(()=>decodeText(b,'utf-8')).toThrow();});
 it('错误与二进制内容不静默替换或吞掉',()=>{expect(()=>decodeText(Uint8Array.from([0xff,0xfe,0x41]).buffer)).toThrow();expect(()=>decodeText(Uint8Array.from([0,1,2,3]).buffer)).toThrow();});
 it('无BOM UTF16只标记候选，原始物理行号保留',()=>{const raw=bytes('模拟_UTF16LE.csv').slice(2);const [s]=parseBuffer(raw,'test.csv','test','hash');expect(s.encodingNeedsReview).toBe(true);expect(s.rowNumbers).toEqual([2,3]);});
+
+it('商品名的竖线不参与分隔符自动猜测',()=>{
+ const headers=Array.from({length:34},(_,i)=>`column_${i}`);
+ const data=Array.from({length:7},(_,i)=>headers.map((_,j)=>j===7?'Synthetic item | RGB | Alarm | Clock':j===8?'"Synthetic, item | Blue | Large"':String(i)).join(','));
+ const b=new TextEncoder().encode([headers.join(','),...data,''].join('\r\n')).buffer;
+ const [s]=parseBuffer(b,'synthetic-pipes.csv','id','hash');expect(s.headers).toHaveLength(34);expect(s.rows).toHaveLength(7);expect(s.rows[0].column_8).toBe('Synthetic, item | Blue | Large');
+});

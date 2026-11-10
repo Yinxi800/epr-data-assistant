@@ -56,7 +56,7 @@ export function parseBuffer(buffer:ArrayBuffer,fileName:string,fileId:string,has
     const content=decoded.text;
     const matrix:string[][]=[];const sourceRowNumbers:number[]=[];const parseErrors:Papa.ParseError[]=[];
     let cursor=0,line=1;
-    Papa.parse<string[]>(content,{dynamicTyping:false,skipEmptyLines:false,step:result=>{
+    Papa.parse<string[]>(content,{dynamicTyping:false,delimitersToGuess:[',','\t',';'],skipEmptyLines:false,step:result=>{
       matrix.push(result.data);sourceRowNumbers.push(line);parseErrors.push(...result.errors);
       const consumed=content.slice(cursor,result.meta.cursor);
       line+=(consumed.match(/\r\n|\r|\n/g)||[]).length;cursor=result.meta.cursor;
