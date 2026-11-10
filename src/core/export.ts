@@ -80,7 +80,7 @@ export function buildWorkbook(calculation:Calculation,sheets:Sheet[],edits:Edit[
     ...sheets.flatMap(sheet=>Object.entries(sheet.mapping).map(([field,header])=>({
       '项目':'字段映射','值':header,'文件':sheet.fileName,'文件 SHA256':sheet.hash,'工作表':sheet.name,
       '标准字段':fields[field as Field],'映射已确认':sheet.confirmed?'是':'否','小数格式':sheet.numberFormat==='dot'?'小数点 . / 千分位 ,':'小数点 , / 千分位 .',
-      '参与计算':sheet.enabled?'是':'否','重复文件':sheet.duplicate?'是':'否',
+      '文件编码':sheet.csvEncoding||'Excel','编码识别方式':sheet.encodingDetection||'未记录','编码候选待核对':sheet.encodingNeedsReview&&!sheet.confirmed?'是':'否','参与计算':sheet.enabled?'是':'否','重复文件':sheet.duplicate?'是':'否',
     }))),
   ];
   XLSX.utils.book_append_sheet(workbook,sheetFromRows(metadata),'字段映射及计算口径');

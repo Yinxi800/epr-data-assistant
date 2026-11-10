@@ -27,8 +27,8 @@ describe('local parser',()=>{
   it('rejects malformed headers, oversize, wrong extension and invalid UTF-8',()=>{
     expect(()=>parse('SKU,SKU\na,a')).toThrow('重复列名');expect(()=>parse('SKU,,重量\na,b,4')).toThrow('空列名');
     expect(()=>parseBuffer(new ArrayBuffer(FILE_LIMIT+1),'a.csv','a','b')).toThrow('10 MB');
-    expect(()=>parseBuffer(buffer('abc'),'a.xls','a','b')).toThrow('仅支持');
-    expect(()=>parseBuffer(new Uint8Array([0xff]).buffer,'a.csv','a','b')).toThrow('UTF-8');
+    expect(()=>parseBuffer(buffer('abc'),'a.pdf','a','b')).toThrow('支持');
+    expect(()=>parseBuffer(new Uint8Array([0xff]).buffer,'a.csv','a','b')).toThrow('编码');
   });
   it('parses multiple xlsx worksheets, preserves formatted values and rejects formulas',()=>{
     const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['SKU','重量'],['A','1,25']]),'模拟1');XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([['SKU','重量'],['B','5']]),'模拟2');

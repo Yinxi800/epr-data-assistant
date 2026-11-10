@@ -1,5 +1,8 @@
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
+import * as cptable from 'xlsx/dist/cpexcel.full.mjs';
+import {decodeText,type CsvEncoding} from './encoding';
+XLSX.set_cptable(cptable);
 import { fields, type Field, type Sheet } from './types';
 
 export const FILE_LIMIT = 10 * 1024 * 1024;
@@ -45,13 +48,12 @@ function matrixToSheet(matrix:unknown[][],name:string,fileName:string,fileId:str
   if(rows.length>ROW_LIMIT) throw new Error(`单个文件最多 ${ROW_LIMIT.toLocaleString()} 条记录，请拆分文件。`);
   return {id:`${fileId}:${index}`,fileId,fileName,hash,name,headers,rows,rowNumbers,mapping:inferMapping(headers),confirmed:false,enabled:true,duplicate:false,numberFormat:'dot'};
 }
-export function parseBuffer(buffer:ArrayBuffer,fileName:string,fileId:string,hash:string):Sheet[] {
+export function parseBuffer(buffer:ArrayBuffer,fileName:string,fileId:string,hash:string,encoding:CsvEncoding='auto'):Sheet[] {
   if(buffer.byteLength>FILE_LIMIT) throw new Error('文件超过 10 MB，请拆分后重试。');
   const extension=fileName.split('.').pop()?.toLowerCase();
-  if(extension==='csv') {
-    let content:string;
-    try {content=new TextDecoder('utf-8',{fatal:true}).decode(buffer).replace(/^\uFEFF/,'');}
-    catch {throw new Error('CSV 编码不是 UTF-8，请另存为 UTF-8 CSV 后重试。');}
+  if(['csv','tsv','txt'].includes(extension||'')) {
+    const decoded=decodeText(buffer,encoding);
+    const content=decoded.text;
     const matrix:string[][]=[];const sourceRowNumbers:number[]=[];const parseErrors:Papa.ParseError[]=[];
     let cursor=0,line=1;
     Papa.parse<string[]>(content,{dynamicTyping:false,skipEmptyLines:false,step:result=>{
@@ -61,10 +63,17 @@ export function parseBuffer(buffer:ArrayBuffer,fileName:string,fileId:string,has
     }});
     const errors=parseErrors.filter(e=>e.code!=='UndetectableDelimiter');
     if(errors.length) throw new Error(`CSV 格式错误：${errors[0].message}。请检查引号和分隔符。`);
-    return [matrixToSheet(matrix,'CSV',fileName,fileId,hash,0,sourceRowNumbers)];
+    const {text,...metadata}=decoded;
+    return [{...matrixToSheet(matrix,extension!.toUpperCase(),fileName,fileId,hash,0,sourceRowNumbers),...metadata}];
   }
-  if(extension!=='xlsx') throw new Error('仅支持 .csv 和 .xlsx 文件，不支持旧版 XLS 或含宏文件。');
-  const workbook=XLSX.read(buffer,{type:'array',cellDates:false,cellFormula:true});
+  if(!['xlsx','xls','ods'].includes(extension||'')) throw new Error('支持 CSV、TSV、TXT、XLSX、XLS 和 ODS 文件，不支持含宏文件。');
+  const signature=new Uint8Array(buffer);
+  const zip=signature[0]===0x50&&signature[1]===0x4b;
+  const ole=[0xd0,0xcf,0x11,0xe0,0xa1,0xb1,0x1a,0xe1].every((v,i)=>signature[i]===v);
+  const biff=signature[0]===9&&[0,2,4,8].includes(signature[1]);
+  if(extension==='xls'?!(ole||biff):!zip)throw new Error('文件内容与扩展名不一致，请导出真实的 XLSX、XLS 或 ODS 工作簿。');
+  const workbook=XLSX.read(buffer,{type:'array',cellDates:false,cellFormula:true,bookVBA:true});
+  if(workbook.vbaraw)throw new Error('工作簿含宏，请另存为不含宏的文件再导入。');
   if(!workbook.SheetNames.length) throw new Error('工作簿没有可读取的工作表。');
   if(workbook.SheetNames.length>20) throw new Error('单个文件最多 20 个工作表，请拆分文件。');
   let total=0;
@@ -82,9 +91,9 @@ export function parseBuffer(buffer:ArrayBuffer,fileName:string,fileId:string,has
     return sheet;
   });
 }
-export async function parseFile(file:File):Promise<Sheet[]> {
+export async function parseFile(file:File,encoding:CsvEncoding='auto'):Promise<Sheet[]> {
   if(file.size>FILE_LIMIT) throw new Error('文件超过 10 MB，请拆分后重试。');
-  if(!/\.(csv|xlsx)$/i.test(file.name)) throw new Error('请选择 CSV 或 XLSX 文件。');
+  if(!/\.(csv|tsv|txt|xlsx|xls|ods)$/i.test(file.name)) throw new Error('请选择 CSV、TSV、TXT、XLSX、XLS 或 ODS 文件。');
   const buffer=await file.arrayBuffer();
   const digest=await crypto.subtle.digest('SHA-256',buffer);
   const hash=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
@@ -96,7 +105,7 @@ export async function parseFile(file:File):Promise<Sheet[]> {
       clearTimeout(timeout);worker.terminate();
       if(event.data.error) reject(new Error(event.data.error));else resolve(event.data.sheets||[]);
     };
-    worker.onerror=()=>{clearTimeout(timeout);worker.terminate();reject(new Error('文件解析失败，请检查文件内容或尝试另存为 UTF-8 CSV。'));};
-    worker.postMessage({buffer,fileName:file.name,fileId,hash},[buffer]);
+    worker.onerror=()=>{clearTimeout(timeout);worker.terminate();reject(new Error('文件解析失败，请检查文件内容、格式或文本编码。'));};
+    worker.postMessage({buffer,fileName:file.name,fileId,hash,encoding},[buffer]);
   });
 }

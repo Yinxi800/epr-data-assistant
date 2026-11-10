@@ -64,3 +64,17 @@ test('亚马逊目的国字段自动读取，多国分别汇总且导出不按�
  expect(sheetRows(wb,'数据汇总').map(r=>r['国家'])).toEqual(['DE','FR']);expect(sheetRows(wb,'标准化明细')[1]['当前·商城站点']).toBe('amazon.de');
  await page.screenshot({path:'output/playwright/multi-country-summary.png',fullPage:true});
 });
+
+for(const file of ['模拟_GBK.csv','模拟_UTF16LE.csv','模拟_UTF16BE.csv','模拟_制表.tsv','模拟_分号.txt','模拟.xls','模拟.ods'])test(`${file} 上传、中文预览、10kg与Excel导出`,async({page})=>{
+ await page.goto('/');await upload(page,path.resolve('tests/fixtures',file));await map(page);await configure(page);await summary(page);await expect(page.locator('tbody tr').first().locator('td').nth(5)).toHaveText('10');
+ const wb=await downloadWorkbook(page);expect(sheetRows(wb,'数据汇总')[0]['重量 kg（精确值）']).toBe('10');expect(sheetRows(wb,'标准化明细')[0]['当前·客户']).toBe('模拟客户A');
+});
+test('月、季、整年、自定义期间，切换撤销复核且导出日期一致',async({page})=>{
+ await page.goto('/');await upload(page);await map(page);await configure(page);await summary(page);await page.getByLabel('我已复核当前纳入、排除记录及计算结果').check();
+ await page.locator('nav').getByRole('button',{name:/口径与范围/}).click();await page.getByLabel('时间段选择').selectOption('month');await page.getByLabel('月份',{exact:true}).fill('2024-02');await expect(page.getByLabel('结束日期')).toHaveValue('2024-02-29');
+ await page.getByLabel('时间段选择').selectOption('quarter');await expect(page.getByLabel('开始日期')).toHaveValue('2024-01-01');await expect(page.getByLabel('结束日期')).toHaveValue('2024-03-31');await page.getByLabel('季度',{exact:true}).selectOption('4');await expect(page.getByLabel('结束日期')).toHaveValue('2024-12-31');
+ await page.screenshot({path:'output/playwright/period-quarter.png',fullPage:true});await page.getByLabel('时间段选择').selectOption('year');await page.getByLabel('年份',{exact:true}).selectOption('2026');await expect(page.getByLabel('开始日期')).toHaveValue('2026-01-01');await expect(page.getByLabel('结束日期')).toHaveValue('2026-12-31');
+ await page.locator('nav').getByRole('button',{name:/汇总与导出/}).click();await expect(page.getByLabel('我已复核当前纳入、排除记录及计算结果')).not.toBeChecked();await expect(page.locator('tbody tr').first().locator('td').nth(5)).toHaveText('10');
+ const ready=page.waitForEvent('download');await page.getByRole('button',{name:'导出未完成草稿'}).click();expect((await ready).suggestedFilename()).toContain('2026-01-01_2026-12-31');
+ await page.locator('nav').getByRole('button',{name:/口径与范围/}).click();await expect(page.getByLabel('时间段选择')).toHaveValue('year');await page.getByLabel('时间段选择').selectOption('custom');await page.getByLabel('开始日期').fill('2026-10-02');await expect(page.getByLabel('开始日期')).toHaveValue('2026-10-02');
+});
