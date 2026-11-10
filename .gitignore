@@ -1,0 +1,9 @@
+node_modules/
+dist/
+extension-dist/
+output/
+playwright-report/
+test-results/
+.DS_Store
+*.local
+.impeccable/review/

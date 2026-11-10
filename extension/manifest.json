@@ -1,0 +1,1 @@
+{"manifest_version":3,"name":"EPR申报数据助手 · 本地入口","version":"0.1.0","description":"本地整理EPR报告，仅通用数据准备，不上传报告或正式申报。","action":{"default_title":"打开 EPR 申报数据助手"},"background":{"service_worker":"background.js"},"content_security_policy":{"extension_pages":"script-src 'self'; object-src 'none'; connect-src 'self';"}}
