@@ -343,3 +343,17 @@
 .report-compact .report-data>.pagination{padding:0 12px}
 .report-compact .report-data>.pagination:empty{display:none}
 .report-compact .report-data>.report-scroll-hint{margin:8px 12px}
+
+/* Attention belongs to the affected cell; zero is still an ordinary value. */
+.report-compact{--attention-missing-bg:#fff0ef;--attention-missing-ink:#a12622;--attention-review-bg:#fff5db;--attention-review-ink:#77500c;--summary-bg:#edf4ff;--summary-ink:#244e95}
+.report-compact .report-data td[data-attention=missing],.report-compact .report-totals td[data-attention=missing]{background:var(--attention-missing-bg);color:var(--attention-missing-ink);font-weight:650}
+.report-compact .report-data td[data-attention=review],.report-compact .report-totals td[data-attention=review]{background:var(--attention-review-bg);color:var(--attention-review-ink)}
+.report-compact td[data-attention] strong,.report-compact td[data-attention] .subline{color:inherit}
+.report-compact .report-weight-pairs dd[data-attention=missing],.report-compact .report-weight-details>span[data-attention=missing]{background:var(--attention-missing-bg);color:var(--attention-missing-ink);font-weight:650}
+.report-compact .report-totals td.summary-value:not([data-attention]),.report-compact .report-totals td.weight-subtotal-cell:not([data-attention]){background:var(--summary-bg);color:var(--summary-ink);font-weight:650}
+.report-compact .report-color-key{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:11px;margin:10px 0 6px;line-height:1.6}
+.report-compact .report-color-key span{padding:3px 7px;border-radius:3px}
+.report-compact .key-missing{background:var(--attention-missing-bg);color:var(--attention-missing-ink)}
+.report-compact .key-review,.report-compact .file-attention{background:var(--attention-review-bg);color:var(--attention-review-ink)}
+.report-compact .key-total{background:var(--summary-bg);color:var(--summary-ink)}
+.report-compact .date-scope-warning{background:var(--attention-review-bg);color:var(--attention-review-ink);padding:10px 12px;border:1px solid #dcc387;border-radius:4px}
