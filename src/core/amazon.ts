@@ -2,6 +2,7 @@ import type {DataRow,Sheet,Values} from './types';
 export const AMAZON_ADAPTER_VERSION='amazon-epr-v1';
 const canonical=(s:string)=>s.trim().toLowerCase().replace(/[\s_-]+/g,'');
 const materials=[['paper_kg','纸'],['glass_kg','玻璃'],['aluminum_kg','铝'],['steel_kg','钢'],['plastic_kg','塑料'],['wood_kg','木材'],['other_kg','其他']] as const;
+export function amazonMaterialLabel(column:string){return materials.find(([key])=>canonical(key)===canonical(column))?.[1]||column;}
 export function isAmazonReport(headers:string[]){const set=new Set(headers.map(canonical));return ['unique_account_identifier','report_period_start','report_period_end','epr_category','total_units_sold','amazon_marketplace'].every(k=>set.has(canonical(k)));}
 export function amazonDetailCount(sheet:Sheet){if(!sheet.amazon?.enabled)return sheet.rows.length;const columns=new Map(sheet.headers.map(k=>[canonical(k),k]));return sheet.rows.reduce((n,row)=>{const category=(row[columns.get(canonical('epr_category'))||'']||'').trim().toLowerCase();return n+(['primary packaging','secondary packaging'].includes(category)?Math.max(1,materials.filter(([k])=>row[columns.get(canonical(k))||'']?.trim()).length):1);},0);}
 function date(value:string){const match=value.trim().match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:T00:00:00(?:\.000)?Z)?$/);if(!match)return '';const s=`${match[1]}-${match[2].padStart(2,'0')}-${match[3].padStart(2,'0')}`;const d=new Date(s+'T00:00:00Z');return Number.isFinite(d.getTime())&&d.toISOString().startsWith(s)?s:'';}

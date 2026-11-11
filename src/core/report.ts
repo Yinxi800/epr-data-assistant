@@ -1,4 +1,5 @@
 import Decimal from 'decimal.js';
+import {amazonMaterialLabel} from './amazon';
 import {normalizeRows,parseNumber,parsePeriod} from './calculation';
 import {resolveDestination} from './country';
 import {normalizeBusiness} from './rules';
@@ -39,13 +40,13 @@ export function reportLines(sheets:Sheet[]):ReportLine[]{const output=normalizeR
  if(summaryIdentifier&&asin)notes.push(`原报告标识“${asin}”不是标准格式的 ASIN，已保留原值`);
  return {row,sourceId,productId,productName:v.name?.trim()||(productId?'未提供产品名称':'无法对应产品'),business,classification:v.categoryDetail?.trim()||'',layer:v.layer||'',country:country.code||'待核对',period:v.period||'未提供',quantity:notes.includes('数量缺失或格式异常')?null:quantity,kg,material:v.material||'未分类',notes};
 });const seen=new Set<string>(),fingerprints=new Map<string,string[]>();for(const line of output){if(seen.has(line.sourceId))continue;seen.add(line.sourceId);const key=JSON.stringify(Object.entries(line.row.raw).sort(([a],[b])=>a.localeCompare(b)));const matches=fingerprints.get(key);if(matches)matches.push(line.sourceId);else fingerprints.set(key,[line.sourceId]);}const duplicates=new Set([...fingerprints.values()].filter(ids=>ids.length>1).flat());for(const line of output)if(duplicates.has(line.sourceId))line.notes.push('有内容相同的报告行，已全部保留，请核对是否需要重复统计');return output;}
-export function groupLines(lines:ReportLine[],byProduct:boolean,byClassification=true):ReportGroup[]{
+export function groupLines(lines:ReportLine[],byProduct:boolean,byClassification=true,byMaterial=false):ReportGroup[]{
  const groups=new Map<string,ReportGroup>();
- for(const line of lines){const v=line.row.values;const key=JSON.stringify([line.row.fileId,v.customer||'',v.store||'',line.country,line.period,line.business,byClassification?line.classification:'',line.layer,v.channel||'',...(byProduct?[line.productId||line.sourceId,v.sku||'']:[])]);
+ for(const line of lines){const v=line.row.values;const key=JSON.stringify([line.row.fileId,v.customer||'',v.store||'',line.country,line.period,line.business,byClassification?line.classification:'',line.layer,v.channel||'',...(byMaterial?[line.material]:[]),...(byProduct?[line.productId||line.sourceId,v.sku||'']:[])]);
  const group=groups.get(key)||{channel:v.channel||'',key,fileName:line.row.fileName,customer:v.customer||'未提供',store:v.store||'未提供',productId:byProduct?line.productId:'',productName:byProduct?line.productName:'',business:line.business,classification:byClassification?line.classification:'',layer:line.layer,country:line.country,period:line.period,quantity:null,kg:null,partial:false,materials:[],sourceIds:[],lines:[],notes:[]};group.lines.push(line);groups.set(key,group);}
  for(const group of groups.values()){
   const sources=new Map<string,ReportLine[]>(),materials=new Map<string,{total:Decimal;known:boolean;missing:boolean}>();let total=new Decimal(0),known=false;
-  for(const line of group.lines){sources.set(line.sourceId,[...(sources.get(line.sourceId)||[]),line]);const material=materials.get(line.material)||{total:new Decimal(0),known:false,missing:false};if(line.kg===null){material.missing=true;group.partial=true;}else{known=true;total=total.plus(line.kg);material.known=true;material.total=material.total.plus(line.kg);}materials.set(line.material,material);if(line.row.amazon?.blankMaterials.length)group.partial=true;}
+  for(const line of group.lines){sources.set(line.sourceId,[...(sources.get(line.sourceId)||[]),line]);const material=materials.get(line.material)||{total:new Decimal(0),known:false,missing:false};if(line.kg===null){material.missing=true;group.partial=true;}else{known=true;total=total.plus(line.kg);material.known=true;material.total=material.total.plus(line.kg);}materials.set(line.material,material);if(!byMaterial&&line.row.amazon?.blankMaterials.length)group.partial=true;}
   let quantity=new Decimal(0),quantityKnown=true;for(const siblings of sources.values()){const q=new Set(siblings.map(s=>s.quantity));if(q.size!==1||siblings[0].quantity===null){quantityKnown=false;continue;}quantity=quantity.plus(siblings[0].quantity);}
   const ambiguousGeneric=group.lines.some(l=>!l.row.amazon)&&materials.size>1&&sources.size>1;
   group.quantity=quantityKnown&&!ambiguousGeneric?quantity.toFixed():null;group.kg=known?total.toFixed():null;group.sourceIds=[...sources.keys()];group.materials=[...materials].map(([name,m])=>({name,kg:m.known?m.total.toFixed():null}));group.notes=[...new Set(group.lines.flatMap(l=>l.notes))];if(ambiguousGeneric)group.notes.push('不同材料行的数量可能重复，暂不合计产品数量');
@@ -54,6 +55,16 @@ export function groupLines(lines:ReportLine[],byProduct:boolean,byClassification
 }
 // Totals span products while keeping each source subclass and scope separate.
 export function reportTotals(lines:ReportLine[]):ReportGroup[]{return groupLines(lines,false);}
+export function reportMaterialTotals(lines:ReportLine[]):ReportGroup[]{
+ const materialLines=lines.filter(l=>l.material!=='不适用'&&l.row.amazon?.weightColumn!=='missing_material_weight');
+ const sources=new Map(lines.map(l=>[l.sourceId,l]));
+ for(const line of sources.values())for(const column of line.row.amazon?.blankMaterials||[]){
+  const material=amazonMaterialLabel(column);
+  materialLines.push({...line,material,kg:null,notes:[...line.notes,`${material}重量未填写` ]});
+ }
+ const order=['纸','塑料','玻璃','铝','钢','木材','其他'];const rank=(name:string)=>order.includes(name)?order.indexOf(name):99;
+ return groupLines(materialLines,false,true,true).sort((a,b)=>rank(a.materials[0].name)-rank(b.materials[0].name)||a.materials[0].name.localeCompare(b.materials[0].name,'zh-CN')||a.layer.localeCompare(b.layer));
+}
 export function buildParsedReport(sheets:Sheet[],filter:ReportFilter={}):ParsedReport {
  const query=filter.search?.trim().toLowerCase()||'';
  const dateActive=!!(filter.start||filter.end),unknownPeriods=new Set<string>(),crossPeriods=new Set<string>();

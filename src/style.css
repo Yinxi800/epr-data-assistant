@@ -357,3 +357,5 @@
 .report-compact .key-review,.report-compact .file-attention{background:var(--attention-review-bg);color:var(--attention-review-ink)}
 .report-compact .key-total{background:var(--summary-bg);color:var(--summary-ink)}
 .report-compact .date-scope-warning{background:var(--attention-review-bg);color:var(--attention-review-ink);padding:10px 12px;border:1px solid #dcc387;border-radius:4px}
+.report-compact [data-view=materials] .category-column{width:220px}
+.report-compact [data-view=materials] .weight-detail-cell{background:#f5f8fc;color:#203c63}
