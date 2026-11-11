@@ -194,3 +194,87 @@
 @media(max-width:750px){.report-inline-filters .column-filters select,.report-inline-filters .report-search input{font-size:16px}.report-totals .report-table-heading{align-items:flex-start;flex-direction:column;gap:4px}}
 
 .report-inline-filters .material-list b{white-space:nowrap;flex-shrink:0}
+
+/* Dense report view: prioritize columns and rows over surrounding chrome. */
+.report-compact{font-size:12px}
+.report-compact .report-header{height:52px;padding:0 20px}
+.report-compact .report-brand{font-size:19px;min-width:180px}
+.report-compact .report-brand-sub{font-size:10px;margin-top:3px}
+.report-compact .report-header-location{font-size:12px}
+.report-compact .report-layout{display:block;min-height:calc(100vh - 52px)}
+.report-compact .report-main{padding:16px 20px}
+.report-compact .report-title{margin-bottom:8px;gap:16px}
+.report-compact .report-title h1{font-size:20px;margin-bottom:3px}
+.report-compact .report-title p,.report-compact .report-meta{font-size:11px;line-height:1.6}
+.report-compact .report-meta{margin-bottom:10px}
+.report-compact .report-toolbar{padding:4px 0}
+.report-compact .report-table-heading{padding:12px 0 8px}
+.report-compact .report-table-heading h2{font-size:14px}
+.report-compact .report-table-heading>span{font-size:11px}
+.report-compact button,.report-compact input:not([type=checkbox]),.report-compact select{font-size:12px;min-height:32px;padding:5px 8px}
+.report-compact .report-tabs button{font-size:12px;padding:6px 0}
+.report-compact .report-file-panel{border-bottom:1px solid var(--line);background:#edf2f8}
+.report-compact .report-file-panel>summary{display:flex;align-items:center;gap:8px;min-height:34px;padding:6px 20px;color:var(--blue);font-size:12px;cursor:pointer;list-style:none}
+.report-compact .file-panel-chevron{margin-left:auto}
+.report-compact .report-file-panel[open] .file-panel-chevron{transform:rotate(180deg)}
+.report-compact .report-file-panel>summary span{font-size:11px;color:var(--muted)}
+.report-compact .report-rail{position:static;width:100%;height:auto;border:0;padding:0 20px 12px;display:block}
+.report-compact .rail-section-title,.report-compact .rail-bottom{display:none}
+.report-compact .rail-files{display:flex;gap:16px;overflow:auto;margin:4px 0 8px}
+.report-compact .rail-file{min-width:220px;max-width:360px;padding:8px 0}
+.report-compact .rail-file strong{font-size:12px}
+.report-compact .rail-file span,.report-compact .rail-file small{margin-top:2px;font-size:11px}
+.report-compact .rail-add{width:auto;margin:0 12px 0 0;font-size:12px}
+.report-compact .rail-clear{margin:0;font-size:12px}
+.report-compact .report-data table,.report-compact .report-totals table{font-size:12px;min-width:1200px}
+.report-compact .report-data th,.report-compact .report-totals th{font-size:11px;padding:8px;line-height:1.5}
+.report-compact .report-data td,.report-compact .report-totals td{padding:8px;line-height:1.5}
+.report-compact .report-product{min-width:0;max-width:none}
+.report-compact .report-product>strong{font-size:12px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.report-compact .report-data .subline,.report-compact .report-totals .subline{font-size:11px;line-height:1.4;margin-top:3px}
+.report-compact .report-data td.number>strong{font-size:12px}
+.report-compact .report-category{min-width:0;max-width:none}
+.report-compact .report-category>strong{font-size:12px}
+.report-compact .report-classification{overflow-wrap:anywhere}
+.report-compact .report-classification strong{font-size:12px;font-weight:550}
+.report-compact .report-classification .subline{color:var(--muted)}
+.report-compact .report-data td>button{font-size:11px;min-height:28px;padding:2px 4px}
+.report-compact .product-column{width:200px}
+.report-compact .category-column{width:90px}
+.report-compact .classification-column{width:190px}
+.report-compact .layer-column{width:110px}
+.report-compact .country-column{width:170px}
+.report-compact .quantity-column{width:75px}
+.report-compact .material-column{width:150px}
+.report-compact .weight-column{width:95px}
+.report-compact .source-column{width:120px}
+.report-compact [data-view=categories] .category-column{width:220px}
+.report-compact .column-filters{gap:5px;margin-top:6px}
+.report-compact .column-filters select,.report-compact .report-search input{font-size:12px;min-height:32px;padding:5px 6px}
+.report-compact .report-search{min-width:0;max-width:none;width:100%}
+.report-compact .report-search input{padding:5px 6px 5px 27px!important}
+.report-compact .report-search svg{left:7px;width:14px}
+.report-compact .report-period summary{font-size:11px;padding:5px 0}
+.report-compact .material-list{min-width:0;gap:3px}
+.report-compact .material-list>span{gap:8px}
+.report-compact .material-list b{white-space:nowrap;flex-shrink:0}
+.report-compact .zero-materials{font-size:11px;margin-top:4px}
+.report-compact .report-caption{font-size:11px;padding:8px 0 12px;line-height:1.6}
+.report-compact .report-totals .table-wrap{max-height:50vh}
+.report-compact .report-advanced{margin:14px 0}
+.report-compact .filter-feedback{margin:4px 0;font-size:11px}
+@media(max-width:750px){
+ .report-compact .report-main{padding:12px}
+ .report-compact .report-header{padding:0 12px}
+ .report-compact .report-file-panel>summary{padding:6px 12px}
+ .report-compact .report-rail{padding:0 12px 12px}
+ .report-compact .report-title{gap:8px}
+ .report-compact .report-title .actions button{min-height:40px}
+ .report-compact .column-filters select,.report-compact .report-search input,.report-compact .report-period input{font-size:16px;min-height:44px}
+ .report-compact .report-data td>button{min-height:44px}
+ .report-compact .report-file-panel>summary,.report-compact .report-tabs button{min-height:44px}
+}
+
+.report-compact .zero-materials summary{min-height:24px;padding:3px 0}
+.report-compact .report-period summary{min-height:28px}
+@media(max-width:750px){.report-compact .zero-materials summary,.report-compact .report-period summary{min-height:44px;padding-block:10px}}

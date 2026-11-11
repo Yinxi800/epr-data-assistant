@@ -9,6 +9,13 @@ export interface ReportFilter {search?:string;business?:string;country?:string;p
 export interface ParsedReport {lines:ReportLine[];products:ReportGroup[];categories:ReportGroup[];sourceCount:number;productCount:number;unassignedCount:number;issueSourceCount:number;}
 const unitFactor:Record<string,string>={g:'0.001',kg:'1',t:'1000'};
 export const businessLabel=(code:string)=>({packaging:'包装',weee:'电子电器',battery:'电池'}[code]||code||'分类未提供');
+const classificationTranslations:Record<string,string>={
+ 'SMALL EQUIPMENT EXCEPT PHOTOVOLTAIC PANEL':'小型设备（光伏板除外）',
+ 'SMALL EQUIPMENT':'小型设备',
+ 'LARGE EQUIPMENT':'大型设备',
+ 'TEMPERATURE EXCHANGE EQUIPMENT':'温度交换设备',
+};
+export function classificationLabel(value:string):string{return value.split(' / ').map(v=>classificationTranslations[v.trim().toUpperCase()]||v).join(' / ');}
 export function reportLines(sheets:Sheet[]):ReportLine[]{const output=normalizeRows(sheets).map(row=>{
  const v=row.values,notes:string[]=[];const sourceId=row.amazon?.sourceId||row.id;const country=resolveDestination(v);if(country.message)notes.push(country.message);
  const quantity=parseNumber(v.sales,row.numberFormat);if(quantity===null||new Decimal(quantity).isNegative()||!new Decimal(quantity).isInteger())notes.push('数量缺失或格式异常');
@@ -44,9 +51,8 @@ export function groupLines(lines:ReportLine[],byProduct:boolean,byClassification
  }
  return [...groups.values()];
 }
-// Totals span products and subclasses, but preserve file, account, country,
-// period, category, packaging layer and channel boundaries.
-export function reportTotals(lines:ReportLine[]):ReportGroup[]{return groupLines(lines,false,false);}
+// Totals span products while keeping each source subclass and scope separate.
+export function reportTotals(lines:ReportLine[]):ReportGroup[]{return groupLines(lines,false);}
 export function buildParsedReport(sheets:Sheet[],filter:ReportFilter={}):ParsedReport {
  const query=filter.search?.trim().toLowerCase()||'';
  const all=reportLines(sheets);const lines=all.filter(l=>{

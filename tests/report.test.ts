@@ -2,7 +2,7 @@ import {it,expect} from 'vitest';
 import fs from 'node:fs';
 import * as XLSX from 'xlsx';
 import {parseBuffer} from '../src/core/parser';
-import {buildParsedReport,reportTotals} from '../src/core/report';
+import {buildParsedReport,reportTotals,classificationLabel} from '../src/core/report';
 import {buildReportWorkbook} from '../src/core/report-export';
 const load=()=>{const b=fs.readFileSync('tests/fixtures/模拟_亚马逊多材料.csv');return parseBuffer(b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength),'synthetic.csv','file','hash');};
 it('默认直接展示原报告，无需伪造人工确认或退货设置',()=>{const sheets=load(),r=buildParsedReport(sheets);expect(sheets[0].confirmed).toBe(false);expect(sheets[0].amazon?.confirmed).toBe(false);expect(r.sourceCount).toBe(3);expect(r.productCount).toBe(1);expect(r.products).toHaveLength(3);expect(r.products.map(g=>g.quantity)).toEqual(['10','10','10']);expect(r.products.find(g=>g.business==='weee')?.kg).toBe('7.125');});
@@ -21,16 +21,21 @@ it('产品、国家、材料、层级、子分类和文件可组合筛选',()=>{
  expect(buildParsedReport(sheets,{classification:'SMALL EQUIPMENT'}).sourceCount).toBe(2);
  expect(buildParsedReport(sheets,{file:'unknown'}).sourceCount).toBe(0);
 });
-it('筛选合计跨产品和子分类，但隔离国家层级文件，材料不重复计数量',()=>{
+it('筛选合计保留细分类并隔离国家层级文件，材料不重复计数量',()=>{
  const sheets=load();sheets[0].rows.push({...sheets[0].rows[0],ASIN:'SECOND',EPR_SUBCATEGORY1:'LARGE EQUIPMENT',TOTAL_REPORTED_WEIGHT_KG:'0.1',TOTAL_UNITS_SOLD:'2'});sheets[0].rowNumbers.push(5);
- const totals=reportTotals(buildParsedReport(sheets).lines);expect(totals).toHaveLength(3);
- expect(totals.find(g=>g.business==='weee')?.kg).toBe('7.225');expect(totals.find(g=>g.business==='weee')?.quantity).toBe('12');
+ const totals=reportTotals(buildParsedReport(sheets).lines);expect(totals).toHaveLength(4);
+ expect(totals.find(g=>g.classification==='SMALL EQUIPMENT')?.kg).toBe('7.125');expect(totals.find(g=>g.classification==='SMALL EQUIPMENT')?.quantity).toBe('10');expect(totals.find(g=>g.classification==='LARGE EQUIPMENT')?.kg).toBe('0.1');expect(totals.find(g=>g.classification==='LARGE EQUIPMENT')?.quantity).toBe('2');
  expect(totals.find(g=>g.layer==='初级包装')?.quantity).toBe('10');expect(totals.find(g=>g.layer==='初级包装')?.kg).toBe('1.45');
- const other={...sheets[0],id:'other:0',fileId:'other'};expect(reportTotals(buildParsedReport([...sheets,other]).lines)).toHaveLength(6);
+ const other={...sheets[0],id:'other:0',fileId:'other'};expect(reportTotals(buildParsedReport([...sheets,other]).lines)).toHaveLength(8);
  sheets[0].rows[3].SHIP_TO_COUNTRY_CODE='FR';sheets[0].rows[3].SHIP_TO_COUNTRY='France';expect(reportTotals(buildParsedReport(sheets).lines)).toHaveLength(4);
 });
 it('筛选合计的空白和显式零区分，混有缺失时显示部分合计',()=>{
  const sheets=load();sheets[0].rows[0].TOTAL_REPORTED_WEIGHT_KG='';let total=reportTotals(buildParsedReport(sheets,{business:'weee'}).lines)[0];expect(total.kg).toBeNull();expect(total.partial).toBe(true);
  sheets[0].rows.push({...sheets[0].rows[0],ASIN:'ZERO',TOTAL_REPORTED_WEIGHT_KG:'0'});sheets[0].rowNumbers.push(5);total=reportTotals(buildParsedReport(sheets,{business:'weee'}).lines)[0];expect(total.kg).toBe('0');expect(total.partial).toBe(true);
  expect(reportTotals(buildParsedReport(sheets,{search:'nothing'}).lines)).toEqual([]);
+});
+
+it('细分类仅翻译已有标签，不根据产品补分类，未识别原值保留',()=>{
+ expect(classificationLabel('SMALL EQUIPMENT EXCEPT PHOTOVOLTAIC PANEL')).toBe('小型设备（光伏板除外）');expect(classificationLabel('TEMPERATURE EXCHANGE EQUIPMENT')).toBe('温度交换设备');expect(classificationLabel('UNLISTED / SOURCE LABEL')).toBe('UNLISTED / SOURCE LABEL');
+ const sheets=load();sheets[0].rows.push({...sheets[0].rows[0],ASIN:'SECOND',EPR_SUBCATEGORY1:'',TOTAL_REPORTED_WEIGHT_KG:'0.1'});sheets[0].rowNumbers.push(5);const totals=reportTotals(buildParsedReport(sheets,{business:'weee'}).lines);expect(totals).toHaveLength(2);expect(totals.find(g=>!g.classification)?.kg).toBe('0.1');
 });

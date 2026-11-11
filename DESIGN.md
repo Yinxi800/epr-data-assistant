@@ -43,6 +43,18 @@ typography:
     fontSize: "12px"
     fontWeight: 550
     lineHeight: 1.6
+  compact-brand:
+    fontSize: "19px"
+  compact-brand-sub:
+    fontSize: "10px"
+  compact-title:
+    fontSize: "20px"
+  compact-table:
+    fontSize: "12px"
+  compact-helper:
+    fontSize: "11px"
+  touch-input:
+    fontSize: "16px"
 rounded:
   tag: "4px"
   control: "5px"
@@ -169,3 +181,6 @@ components:
 
 ## 解析表格的列筛选
 产品搜索及选择、类别、国家、材料、来源文件筛选直接置于对应表头；子分类、包装层级及期间收于表头内的原生展开控件。按分类视图的产品范围保留在首列表头，切换视图不重置筛选。取消独立筛选区，先展示明细表，再展示当前筛选结果合计；窄屏横向滚动，数字不拆行。
+
+## v0.2.3 紧凑解析表格
+用户要求表格优先并允许缩小字号。已解析视图移除常驻左栏，改为顶部可展开文件栏；主区全宽，桌面边距20px。EPR 类别、细分类、包装层级独立列和独立筛选。桌面表格12px、表头与辅助文字11px、单元格8px留白、筛选控件32px；手机输入16px、44px点击区域，宽表局部横向滚动。细分类中文仅为原标签翻译，英文同列保留；合计按原报告细分类分别显示。上述密度仅适用于默认直接解析页，复核工作区沿用既有规范。
