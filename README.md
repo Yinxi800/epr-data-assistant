@@ -1,3 +1,5 @@
+<p align="center"><img src="public/brand/icon-128.png" width="72" height="72" alt="EPR Data Assistant"></p>
+
 # EPR 申报数据助手 · EPR Data Assistant
 
 **[打开在线工具 · Open the web app](https://yinxi800.github.io/epr-data-assistant/)**
