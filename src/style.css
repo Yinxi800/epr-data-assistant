@@ -431,3 +431,42 @@
  .report-compact .missing-display-control>span{display:none}
  .report-compact .export-success{justify-content:flex-end}
 }
+
+/* Keep a clear wheel-scroll lane outside the nested report tables. */
+.report-compact .report-main{padding-inline:48px}
+.report-home{background:#f5f7fb}
+.report-home .report-layout{max-width:1280px;margin:0 auto}
+.report-home .report-main{padding:56px 48px 28px}
+.report-home .report-title{margin-bottom:32px}
+.report-home .report-title h1{font-size:32px;letter-spacing:-.025em;color:#19345f;margin-bottom:12px}
+.report-home .report-title p{font-size:15px;line-height:1.8}
+.report-home .upload-layout{grid-template-columns:minmax(0,1.45fr) minmax(250px,1fr);gap:56px;padding:0 0 36px;min-height:0}
+.report-home .report-upload{min-height:370px;background:#fff;border:1px dashed #809bc2;border-radius:12px;padding:36px 32px;gap:14px}
+.report-home .report-upload:hover{background:#fafdff;border-color:#284b9b}
+.upload-emblem{display:flex;align-items:center;justify-content:center;width:64px;height:64px;background:#edf3fc;color:#284b9b;border-radius:16px;margin-bottom:4px}
+.report-home .report-upload h2{font-size:21px}
+.report-home .report-upload p{max-width:36ch;line-height:1.8;font-size:13px;margin-bottom:4px}
+.report-home .report-upload .primary{min-height:44px;min-width:190px;font-size:14px}
+.report-home .report-upload .text-button{font-size:13px}
+.report-home .upload-guide h2{font-size:18px;color:#19345f;margin-bottom:26px}
+.report-home .upload-guide dl{display:block}
+.report-home .upload-guide dl>div{margin-bottom:22px}
+.report-home .upload-guide dt{font-size:15px}
+.report-home .upload-guide dd{font-size:13px}
+.report-home .upload-guide>p{line-height:1.8;color:#526174}
+.report-home .report-advanced{margin-top:24px}
+.report-home footer{line-height:1.8}
+@media(max-width:1100px){
+ .report-compact .report-main{padding-inline:32px}
+ .report-home .report-main{padding:40px 32px 24px}
+ .report-home .upload-layout{gap:32px;grid-template-columns:minmax(0,1.2fr) minmax(220px,1fr)}
+}
+@media(max-width:750px){
+ .report-compact .report-main{padding-inline:20px}
+ .report-home .report-main{padding:28px 20px 20px}
+ .report-home .report-title h1{font-size:26px}
+ .report-home .report-title p{font-size:14px}
+ .report-home .upload-layout{grid-template-columns:1fr;gap:28px}
+ .report-home .report-upload{padding:28px 20px;min-height:330px}
+ .report-home .upload-guide dl>div{margin-bottom:18px}
+}
