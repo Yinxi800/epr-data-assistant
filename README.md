@@ -4,9 +4,11 @@
 
 React + TypeScript 中文本地报告解析工具。默认上传后直接展示解析结果并导出；国家、期间、产品与分类从报告读取。**只做解析、复核与通用申报准备，不连接店铺、不上传报告、不提交正式申报、不计算回收费。**
 
-## Mac、Windows 与浏览器
+## 在线使用：Mac、Windows 共用一个网址
 
-Chrome / Edge 共用本地扩展；Mac、Windows 分别提供本地网页版启动包，Firefox、Safari 通过网页版使用。安装方法、运行前提与验证边界见 [系统与浏览器使用说明](docs/PLATFORM_SUPPORT.md)。开发者运行 `npm run package:platforms` 生成三个分发目录，`npm run test:compat` 验证打包网页版。
+[打开 EPR申报数据助手](https://yinxi800.github.io/epr-data-assistant-site/)。客户无需安装程序或启动本地服务，浏览器打开即可使用；报告仅在浏览器处理。Chrome / Edge 扩展继续提供离线入口。
+
+系统和浏览器验证范围见 [兼容说明](docs/PLATFORM_SUPPORT.md)。开发者运行 `npm run test:compat` 检查构建后的网页。
 
 ## 快速运行
 

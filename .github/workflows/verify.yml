@@ -33,10 +33,6 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run package:platforms
+      - run: npm run build
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:compat
-      - uses: actions/upload-artifact@v4
-        with:
-          name: EPR-platform-packages-${{ matrix.os }}
-          path: output/releases/
