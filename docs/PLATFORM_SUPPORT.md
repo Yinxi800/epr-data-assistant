@@ -1,6 +1,6 @@
 # 统一网址与浏览器兼容
 
-Mac、Windows 用户访问同一个网址：https://yinxi800.github.io/epr-data-assistant-site/ 。无需安装 Node.js、下载桌面程序或保持启动窗口打开。
+Mac、Windows 用户访问同一个网址：https://yinxi800.github.io/epr-data-assistant/ 。无需安装 Node.js、下载桌面程序或保持启动窗口打开。
 
 | 系统 | 建议访问方式 | 验证边界 |
 |---|---|---|
@@ -12,7 +12,7 @@ Mac、Windows 用户访问同一个网址：https://yinxi800.github.io/epr-data-
 
 ## 部署与数据
 
-源码仓库保持私有；公开发布仓库只保存 dist 构建产物及 Pages 配置。公开网页无需登录。程序静态文件从 GitHub Pages 下载，报告解析、筛选及 Excel 生成在浏览器本地完成，不上传客户报告。关闭或刷新页面前请先下载结果。
+项目源码公开，GitHub Pages 直接从同一个 epr-data-assistant 仓库构建和部署。公开网页无需登录。程序静态文件从 GitHub Pages 下载，报告解析、筛选及 Excel 生成在浏览器本地完成，不上传客户报告。关闭或刷新页面前请先下载结果。
 
 Chrome / Edge 扩展仍可独立使用，Mac、Windows 共用一份扩展包。Firefox / Safari 本次使用统一网页版，不提供其扩展安装包。
 
@@ -20,4 +20,4 @@ Chrome / Edge 扩展仍可独立使用，Mac、Windows 共用一份扩展包。F
 
 ## 后续更新
 
-修改私有源码后先构建和验证，再将 `dist/` 的内容同步到公开发布仓库 `Yinxi800/epr-data-assistant-site` 的 main 分支根目录（保留 `.nojekyll`）。该仓库的 Pages 自动发布 main。只同步构建产物，不复制客户报告、output、测试下载或私有仓库历史。
+代码推送至 `Yinxi800/epr-data-assistant` 的 main 分支后，Publish website 工作流自动测试、构建并发布 dist。源码、版本和网站统一在同一个公开仓库。客户报告、output 和本机测试下载不加入代码仓库。

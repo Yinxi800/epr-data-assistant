@@ -6,7 +6,7 @@ React + TypeScript 中文本地报告解析工具。默认上传后直接展示�
 
 ## 在线使用：Mac、Windows 共用一个网址
 
-[打开 EPR申报数据助手](https://yinxi800.github.io/epr-data-assistant-site/)。客户无需安装程序或启动本地服务，浏览器打开即可使用；报告仅在浏览器处理。Chrome / Edge 扩展继续提供离线入口。
+[打开 EPR申报数据助手](https://yinxi800.github.io/epr-data-assistant/)。客户无需安装程序或启动本地服务，浏览器打开即可使用；报告仅在浏览器处理。Chrome / Edge 扩展继续提供离线入口。
 
 系统和浏览器验证范围见 [兼容说明](docs/PLATFORM_SUPPORT.md)。开发者运行 `npm run test:compat` 检查构建后的网页。
 

@@ -122,3 +122,7 @@
 - 本机 Chromium、Firefox、WebKit 对线上真实地址均完成模拟报告导入、来源查看、筛选至空结果、全量Excel下载读回（3行原报告、15组产品明细）。WebKit不等同于Safari实机。
 - 新增Mac、Windows、Linux托管环境中的三浏览器兼容检查，查看工作流中的 compatibility 结果。测试预览改用4183端口，避免Firefox/WebKit禁止4190端口导致的导航失败。
 - 使用同一个网址，不要求客户安装Node.js或本地启动程序；已撤回新增的分系统网页启动包实现。历史本机产物保留，不作为当前交付入口。
+
+### 公开源码与同仓部署调整
+
+按用户明确要求，epr-data-assistant 已改为公开仓库，改由该仓库的 Publish website 自动构建和部署，正式网址为 https://yinxi800.github.io/epr-data-assistant/ 。上方私有源码与独立发布仓库的记录仅为已被替代的历史方案。
