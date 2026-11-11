@@ -310,3 +310,21 @@
 
 .report-compact .filter-chip svg{flex-shrink:0}
 @media(max-width:750px){.report-compact .date-filter-controls .date-mode,.report-compact .date-filter-controls .date-period-choice{grid-column:1/-1}}
+
+/* Keep each weight adjacent to its label; separate item details from the subtotal. */
+.report-compact .report-weight-details{max-width:100%;overflow-x:auto}
+.report-compact .report-weight-pairs{display:grid;grid-template-columns:max-content max-content;column-gap:12px;row-gap:3px;width:max-content;max-width:100%;margin:0;font-size:12px;line-height:1.5}
+.report-compact .report-weight-pairs dt{margin:0;max-width:90px;overflow-wrap:anywhere;font-weight:400}
+.report-compact .report-weight-pairs dd{margin:0;min-width:6ch;white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+.report-compact .report-weight-details .zero-materials{margin-top:4px}
+.report-compact .report-weight-details .zero-materials[open] .report-weight-pairs{margin-top:4px}
+.report-compact .column-note{display:block;margin-top:3px;font-size:10px;font-weight:400;line-height:1.4;color:var(--muted);white-space:normal}
+.report-compact .quantity-column{width:120px}
+.report-compact .material-column{width:180px}
+.report-compact .weight-column{width:130px;white-space:normal}
+.report-compact .weight-subtotal-cell{border-left:1px solid var(--line)}
+.report-compact .report-totals table{table-layout:fixed;min-width:1300px}
+.report-compact .report-totals th{white-space:normal}
+.report-compact .summary-source-link,.report-compact .summary-note-link{display:block;font-size:11px;min-height:28px;padding:2px 0;background:transparent;border:0;color:var(--blue);text-decoration:underline;text-underline-offset:3px}
+.report-compact .summary-note-link{color:#805313}
+@media(max-width:750px){.report-compact .summary-source-link,.report-compact .summary-note-link{min-height:44px}}

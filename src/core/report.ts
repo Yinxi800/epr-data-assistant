@@ -16,6 +16,7 @@ const classificationTranslations:Record<string,string>={
  'TEMPERATURE EXCHANGE EQUIPMENT':'温度交换设备',
 };
 export function classificationLabel(value:string):string{return value.split(' / ').map(v=>classificationTranslations[v.trim().toUpperCase()]||v).join(' / ');}
+export const reportWeightLabel=(name:string,business:string)=>name!=='不适用'?name:business==='weee'?'产品报告重量':business==='battery'?'电池报告重量':'报告重量';
 export function reportLines(sheets:Sheet[]):ReportLine[]{const output=normalizeRows(sheets).map(row=>{
  const v=row.values,notes:string[]=[];const sourceId=row.amazon?.sourceId||row.id;const country=resolveDestination(v);if(country.message)notes.push(country.message);
  const quantity=parseNumber(v.sales,row.numberFormat);if(quantity===null||new Decimal(quantity).isNegative()||!new Decimal(quantity).isInteger())notes.push('数量缺失或格式异常');
