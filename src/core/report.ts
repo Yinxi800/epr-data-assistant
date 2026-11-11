@@ -38,15 +38,19 @@ export function reportLines(sheets:Sheet[]):ReportLine[]{const output=normalizeR
  const usableAsin=asin&&!/^(n\/?a|unknown|not applicable|-)$/i.test(asin)&&!summaryIdentifier?asin:'';
  const productId=usableAsin||sku;
  if(summaryIdentifier&&asin)notes.push(`原报告标识“${asin}”不是标准格式的 ASIN，已保留原值`);
- return {row,sourceId,productId,productName:v.name?.trim()||(productId?'未提供产品名称':'无法对应产品'),business,classification:v.categoryDetail?.trim()||'',layer:v.layer||'',country:country.code||'待核对',period:v.period||'未提供',quantity:notes.includes('数量缺失或格式异常')?null:quantity,kg,material:v.material||'未分类',notes};
-});const seen=new Set<string>(),fingerprints=new Map<string,string[]>();for(const line of output){if(seen.has(line.sourceId))continue;seen.add(line.sourceId);const key=JSON.stringify(Object.entries(line.row.raw).sort(([a],[b])=>a.localeCompare(b)));const matches=fingerprints.get(key);if(matches)matches.push(line.sourceId);else fingerprints.set(key,[line.sourceId]);}const duplicates=new Set([...fingerprints.values()].filter(ids=>ids.length>1).flat());for(const line of output)if(duplicates.has(line.sourceId))line.notes.push('有内容相同的报告行，已全部保留，请核对是否需要重复统计');return output;}
+ return {row,sourceId,productId,productName:v.name?.trim()||(productId?'未提供产品名称':'无法对应产品'),business,classification:business==='packaging'?(v.material?.trim()||'未分类'):v.categoryDetail?.trim()||'',layer:v.layer||'',country:country.code||'待核对',period:v.period||'未提供',quantity:notes.includes('数量缺失或格式异常')?null:quantity,kg,material:v.material||'未分类',notes};
+});
+ const originals=[...new Map(output.map(l=>[l.sourceId,l])).values()];
+ for(const line of originals)for(const column of line.row.amazon?.blankMaterials||[]){const material=amazonMaterialLabel(column);output.push({...line,material,classification:material,kg:null,notes:[...line.notes,`${material}重量未填写`]});}
+ const complete=output.filter(l=>l.row.amazon?.weightColumn!=='missing_material_weight'||l.material!=='未分类');
+ const seen=new Set<string>(),fingerprints=new Map<string,string[]>();for(const line of complete){if(seen.has(line.sourceId))continue;seen.add(line.sourceId);const key=JSON.stringify(Object.entries(line.row.raw).sort(([a],[b])=>a.localeCompare(b)));const matches=fingerprints.get(key);if(matches)matches.push(line.sourceId);else fingerprints.set(key,[line.sourceId]);}const duplicates=new Set([...fingerprints.values()].filter(ids=>ids.length>1).flat());for(const line of complete)if(duplicates.has(line.sourceId))line.notes.push('有内容相同的报告行，已全部保留，请核对是否需要重复统计');return complete;}
 export function groupLines(lines:ReportLine[],byProduct:boolean,byClassification=true,byMaterial=false):ReportGroup[]{
  const groups=new Map<string,ReportGroup>();
- for(const line of lines){const v=line.row.values;const key=JSON.stringify([line.row.fileId,v.customer||'',v.store||'',line.country,line.period,line.business,byClassification?line.classification:'',line.layer,v.channel||'',...(byMaterial?[line.material]:[]),...(byProduct?[line.productId||line.sourceId,v.sku||'']:[])]);
+ for(const line of lines){const v=line.row.values;const key=JSON.stringify([line.row.fileId,v.customer||'',v.store||'',line.country,line.period,line.business,byClassification?line.classification:'',byClassification&&line.business==='packaging'?v.categoryDetail||'':'',line.layer,v.channel||'',...(byMaterial?[line.material]:[]),...(byProduct?[line.productId||line.sourceId,v.sku||'']:[])]);
  const group=groups.get(key)||{channel:v.channel||'',key,fileName:line.row.fileName,customer:v.customer||'未提供',store:v.store||'未提供',productId:byProduct?line.productId:'',productName:byProduct?line.productName:'',business:line.business,classification:byClassification?line.classification:'',layer:line.layer,country:line.country,period:line.period,quantity:null,kg:null,partial:false,materials:[],sourceIds:[],lines:[],notes:[]};group.lines.push(line);groups.set(key,group);}
  for(const group of groups.values()){
   const sources=new Map<string,ReportLine[]>(),materials=new Map<string,{total:Decimal;known:boolean;missing:boolean}>();let total=new Decimal(0),known=false;
-  for(const line of group.lines){sources.set(line.sourceId,[...(sources.get(line.sourceId)||[]),line]);const material=materials.get(line.material)||{total:new Decimal(0),known:false,missing:false};if(line.kg===null){material.missing=true;group.partial=true;}else{known=true;total=total.plus(line.kg);material.known=true;material.total=material.total.plus(line.kg);}materials.set(line.material,material);if(!byMaterial&&line.row.amazon?.blankMaterials.length)group.partial=true;}
+  for(const line of group.lines){sources.set(line.sourceId,[...(sources.get(line.sourceId)||[]),line]);const material=materials.get(line.material)||{total:new Decimal(0),known:false,missing:false};if(line.kg===null){material.missing=true;group.partial=true;}else{known=true;total=total.plus(line.kg);material.known=true;material.total=material.total.plus(line.kg);}materials.set(line.material,material);}
   let quantity=new Decimal(0),quantityKnown=true;for(const siblings of sources.values()){const q=new Set(siblings.map(s=>s.quantity));if(q.size!==1||siblings[0].quantity===null){quantityKnown=false;continue;}quantity=quantity.plus(siblings[0].quantity);}
   const ambiguousGeneric=group.lines.some(l=>!l.row.amazon)&&materials.size>1&&sources.size>1;
   group.quantity=quantityKnown&&!ambiguousGeneric?quantity.toFixed():null;group.kg=known?total.toFixed():null;group.sourceIds=[...sources.keys()];group.materials=[...materials].map(([name,m])=>({name,kg:m.known?m.total.toFixed():null}));group.notes=[...new Set(group.lines.flatMap(l=>l.notes))];if(ambiguousGeneric)group.notes.push('不同材料行的数量可能重复，暂不合计产品数量');
@@ -54,17 +58,11 @@ export function groupLines(lines:ReportLine[],byProduct:boolean,byClassification
  return [...groups.values()];
 }
 // Totals span products while keeping each source subclass and scope separate.
-export function reportTotals(lines:ReportLine[]):ReportGroup[]{return groupLines(lines,false);}
-export function reportMaterialTotals(lines:ReportLine[]):ReportGroup[]{
- const materialLines=lines.filter(l=>l.material!=='不适用'&&l.row.amazon?.weightColumn!=='missing_material_weight');
- const sources=new Map(lines.map(l=>[l.sourceId,l]));
- for(const line of sources.values())for(const column of line.row.amazon?.blankMaterials||[]){
-  const material=amazonMaterialLabel(column);
-  materialLines.push({...line,material,kg:null,notes:[...line.notes,`${material}重量未填写` ]});
- }
- const order=['纸','塑料','玻璃','铝','钢','木材','其他'];const rank=(name:string)=>order.includes(name)?order.indexOf(name):99;
- return groupLines(materialLines,false,true,true).sort((a,b)=>rank(a.materials[0].name)-rank(b.materials[0].name)||a.materials[0].name.localeCompare(b.materials[0].name,'zh-CN')||a.layer.localeCompare(b.layer));
-}
+export function reportTotals(lines:ReportLine[]):ReportGroup[]{return sortGroups(groupLines(lines,false),false);}
+export function reportQuantityKey(g:ReportGroup,byProduct:boolean){return JSON.stringify([g.fileName,g.lines[0]?.row.fileId,g.customer,g.store,g.country,g.period,g.business,g.business==='packaging'?'':g.classification,g.layer,g.channel,...(byProduct?[g.productId||g.sourceIds[0],g.lines[0]?.row.values.sku||'']:[])]);}
+export function reportQuantityGroups(lines:ReportLine[],byProduct:boolean):ReportGroup[]{return [...groupLines(lines.filter(l=>l.business==='packaging'),byProduct,false),...groupLines(lines.filter(l=>l.business!=='packaging'),byProduct)];}
+export function originalClassification(g:ReportGroup){return [...new Set(g.lines.map(l=>l.row.values.categoryDetail?.trim()).filter(Boolean))].join(' / ');}
+function sortGroups(groups:ReportGroup[],byProduct:boolean){const order=['纸','塑料','玻璃','铝','钢','木材','其他'];const rank=(s:string)=>order.includes(s)?order.indexOf(s):99;const productOrder=(g:ReportGroup)=>byProduct?JSON.stringify([g.fileName,g.customer,g.store,g.productId?'0'+g.productId:'1'+g.sourceIds[0],g.lines[0]?.row.values.sku||'']):'';return groups.sort((a,b)=>productOrder(a).localeCompare(productOrder(b))||reportQuantityKey(a,byProduct).localeCompare(reportQuantityKey(b,byProduct))||rank(a.classification)-rank(b.classification)||a.classification.localeCompare(b.classification,'zh-CN'));}
 export function buildParsedReport(sheets:Sheet[],filter:ReportFilter={}):ParsedReport {
  const query=filter.search?.trim().toLowerCase()||'';
  const dateActive=!!(filter.start||filter.end),unknownPeriods=new Set<string>(),crossPeriods=new Set<string>();
@@ -87,5 +85,5 @@ export function buildParsedReport(sheets:Sheet[],filter:ReportFilter={}):ParsedR
  }
  return true;}).map(l=>crossPeriods.has(l.sourceId)?{...l,notes:[...l.notes,'此行包含所选日期以外的数据，按整行计入，未按天拆分']}:l);
  const sources=new Set(lines.map(l=>l.sourceId));const productIds=new Set(lines.filter(l=>l.productId).map(l=>JSON.stringify([l.row.values.customer,l.row.values.store,l.productId])));
- return {lines,unknownPeriodCount:unknownPeriods.size,crossPeriodCount:crossPeriods.size,products:groupLines(lines,true).sort((a,b)=>(a.productId?'0'+a.productId:'1').localeCompare(b.productId?'0'+b.productId:'1')||a.business.localeCompare(b.business)),categories:groupLines(lines,false),sourceCount:sources.size,productCount:productIds.size,unassignedCount:new Set(lines.filter(l=>!l.productId).map(l=>l.sourceId)).size,issueSourceCount:new Set(lines.filter(l=>l.notes.length).map(l=>l.sourceId)).size};
+ return {lines,unknownPeriodCount:unknownPeriods.size,crossPeriodCount:crossPeriods.size,products:sortGroups(groupLines(lines,true),true),categories:sortGroups(groupLines(lines,false),false),sourceCount:sources.size,productCount:productIds.size,unassignedCount:new Set(lines.filter(l=>!l.productId).map(l=>l.sourceId)).size,issueSourceCount:new Set(lines.filter(l=>l.notes.length).map(l=>l.sourceId)).size};
 }
