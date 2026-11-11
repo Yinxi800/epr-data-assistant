@@ -4,6 +4,10 @@
 
 React + TypeScript 中文本地报告解析工具。默认上传后直接展示解析结果并导出；国家、期间、产品与分类从报告读取。**只做解析、复核与通用申报准备，不连接店铺、不上传报告、不提交正式申报、不计算回收费。**
 
+## Mac、Windows 与浏览器
+
+Chrome / Edge 共用本地扩展；Mac、Windows 分别提供本地网页版启动包，Firefox、Safari 通过网页版使用。安装方法、运行前提与验证边界见 [系统与浏览器使用说明](docs/PLATFORM_SUPPORT.md)。开发者运行 `npm run package:platforms` 生成三个分发目录，`npm run test:compat` 验证打包网页版。
+
 ## 快速运行
 
 需要 Node.js 22.12+（推荐 22 LTS）、npm。

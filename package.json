@@ -1,6 +1,6 @@
 {
   "name": "epr-data-assistant",
-  "version": "0.3.5",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,7 +8,9 @@
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "extension": "node scripts/build-extension.mjs"
+    "extension": "node scripts/build-extension.mjs",
+    "package:platforms": "npm run build && npm run extension && node scripts/package-platforms.mjs",
+    "test:compat": "playwright test -c playwright.compat.config.ts"
   },
   "dependencies": {
     "decimal.js": "^10.6.0",
