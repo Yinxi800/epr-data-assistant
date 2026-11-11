@@ -366,3 +366,21 @@
 .report-compact .missing-display-control button[aria-pressed=true]{background:#edf4ff;border-color:#7d9ac5;color:#244e95}
 .report-compact .missing-display-control>span{font-size:11px;color:var(--muted)}
 @media(max-width:750px){.report-compact .missing-display-control{margin-left:0;width:100%}.report-compact .missing-display-control button{min-height:44px}}
+
+/* Allocate width to names and explanations instead of sparse numeric cells. */
+.report-compact .product-column{width:25%}
+.report-compact .category-column{width:7.5%}
+.report-compact .classification-column{width:18%}
+.report-compact .layer-column{width:7.5%}
+.report-compact .country-column{width:15%}
+.report-compact .quantity-column{width:7%}
+.report-compact .weight-column{width:8%}
+.report-compact .source-column{width:12%}
+.report-compact [data-view=categories] .category-column{width:22%}
+.report-compact [data-view=categories] .classification-column{width:23%}
+.report-compact [data-view=categories] .layer-column{width:9%}
+.report-compact [data-view=categories] .country-column{width:18%}
+.report-compact [data-view=categories] .quantity-column{width:8%}
+.report-compact [data-view=categories] .weight-column{width:9%}
+.report-compact [data-view=categories] .source-column{width:11%}
+.report-compact .report-data td:last-child,.report-compact .report-totals td:last-child{overflow-wrap:anywhere}
