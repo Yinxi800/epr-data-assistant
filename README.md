@@ -124,3 +124,7 @@ npm run extension # 先 build，再生成无需服务器的浏览器扩展
 `src/core/parser.ts` 和 Worker：导入与字段建议；`calculation.ts`：标准化/校验/计算；`rules.ts`：集中通用规则配置；`export.ts`：导出；`App.tsx`：操作流程；`extension/`：本地入口。
 
 开发依赖按锁文件固定。SheetJS 从[官方安装来源](https://docs.sheetjs.com/docs/getting-started/installation/nodejs/)安装 0.20.3，浏览器运行不从 CDN 获取代码。
+
+### 扩展打开提示找不到文件
+
+推荐加载 `extension-dist`。运行 `npm run build && npm run extension` 后，`extension` 目录也会同步完整网页，避免误选源码目录时出现 `ERR_FILE_NOT_FOUND`。已加载的扩展可在 Chrome 扩展管理页点击“重新加载”后再打开。
