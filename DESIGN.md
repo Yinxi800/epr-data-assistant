@@ -184,3 +184,8 @@ components:
 
 ## v0.2.3 紧凑解析表格
 用户要求表格优先并允许缩小字号。已解析视图移除常驻左栏，改为顶部可展开文件栏；主区全宽，桌面边距20px。EPR 类别、细分类、包装层级独立列和独立筛选。桌面表格12px、表头与辅助文字11px、单元格8px留白、筛选控件32px；手机输入16px、44px点击区域，宽表局部横向滚动。细分类中文仅为原标签翻译，英文同列保留；合计按原报告细分类分别显示。上述密度仅适用于默认直接解析页，复核工作区沿用既有规范。
+
+## v0.2.4 日期与范围可见性
+日期范围常显于表格上方，支持全部期间、月份、季度、年度和自定义；起止日期始终可编辑，留空表示该端不限。手机日期入口不随表格横向滚动。非日期筛选保留表头内。当前条件显示可移除标签；表尾显示匹配原报告行数、当前页分组和跨页合计范围。按产品视图保留下方分类合计，按分类视图只显示一份分类表。导出按钮明确为“导出全部解析结果”，附近标明全量行数。
+
+参考模式：[Excel SUBTOTAL](https://support.microsoft.com/en-us/excel/functions/subtotal-function) 的筛选后小计、[AG Grid 状态栏](https://www.ag-grid.com/javascript-data-grid/status-bar/) 的总行数/筛选行数显示，以及 [DataTables footer callback](https://datatables.net/examples/core/advanced_init/footer_callback.html) 对本页与全部数据合计的区分。本项目继续按EPR类别、细分类等业务边界分别合计，未引入这些组件库。

@@ -278,3 +278,35 @@
 .report-compact .zero-materials summary{min-height:24px;padding:3px 0}
 .report-compact .report-period summary{min-height:28px}
 @media(max-width:750px){.report-compact .zero-materials summary,.report-compact .report-period summary{min-height:44px;padding-block:10px}}
+
+/* Date selection stays outside the horizontally scrolling table. */
+.report-compact .report-date-filter{padding:10px 0 12px;border-top:1px solid var(--line)}
+.report-compact .date-filter-controls{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.report-compact .date-filter-controls label{display:flex;flex-direction:column;gap:4px;min-width:120px;max-width:180px;font-size:11px;color:var(--muted)}
+.report-compact .date-filter-controls label>span{display:flex;align-items:center;gap:5px}
+.report-compact .date-filter-controls .date-mode{min-width:130px}
+.report-compact .date-filter-controls input{min-width:145px}
+.report-compact .date-filter-controls select{min-width:120px}
+.report-compact .date-range-separator{align-self:flex-end;padding-bottom:6px;color:var(--muted)}
+.report-compact .report-range-hint{font-size:11px;color:var(--muted);padding-bottom:6px;margin-left:auto}
+.report-compact .date-filter-note{font-size:11px;color:var(--muted);margin:6px 0 0;line-height:1.5}
+.report-compact .date-scope-warning{font-size:12px;color:#805313;background:#fff3d9;padding:8px 10px;margin:0 0 10px;line-height:1.6}
+.report-compact .report-title>.actions{align-items:flex-end;flex-direction:column;gap:3px}
+.report-compact .export-scope-hint{font-size:11px;color:var(--muted)}
+.report-compact .filter-feedback{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+.report-compact .filter-chip{display:inline-flex;gap:6px;max-width:300px;min-height:28px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;padding:3px 7px;background:#eef3f8;border-color:var(--line);color:var(--blue);font-size:11px}
+.report-compact .report-statusbar{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:11px;color:var(--muted);padding:7px 0;border-bottom:1px solid var(--line)}
+@media(max-width:750px){
+ .report-compact .date-filter-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:end;gap:8px}
+ .report-compact .date-filter-controls label{min-width:0;max-width:none}
+ .report-compact .date-filter-controls input,.report-compact .date-filter-controls select{min-width:0;font-size:16px;min-height:44px;max-width:100%}
+ .report-compact .date-range-separator{display:none}
+ .report-compact .report-range-hint{grid-column:1/-1;margin-left:0;padding-bottom:0}
+ .report-compact .date-filter-controls .date-mode{min-width:0}
+ .report-compact .filter-chip{min-height:36px;max-width:100%}
+ .report-compact .report-title>.actions{width:100%;align-items:stretch}
+ .report-compact .export-scope-hint{text-align:right}
+}
+
+.report-compact .filter-chip svg{flex-shrink:0}
+@media(max-width:750px){.report-compact .date-filter-controls .date-mode,.report-compact .date-filter-controls .date-period-choice{grid-column:1/-1}}

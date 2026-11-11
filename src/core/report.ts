@@ -6,7 +6,7 @@ import type {DataRow,Sheet} from './types';
 export interface ReportLine {row:DataRow;sourceId:string;productId:string;productName:string;business:string;classification:string;layer:string;country:string;period:string;quantity:string|null;kg:string|null;material:string;notes:string[];}
 export interface ReportGroup {channel:string;key:string;fileName:string;customer:string;store:string;productId:string;productName:string;business:string;classification:string;layer:string;country:string;period:string;quantity:string|null;kg:string|null;partial:boolean;materials:{name:string;kg:string|null}[];sourceIds:string[];lines:ReportLine[];notes:string[];}
 export interface ReportFilter {search?:string;business?:string;country?:string;product?:string;material?:string;layer?:string;classification?:string;file?:string;start?:string;end?:string;}
-export interface ParsedReport {lines:ReportLine[];products:ReportGroup[];categories:ReportGroup[];sourceCount:number;productCount:number;unassignedCount:number;issueSourceCount:number;}
+export interface ParsedReport {lines:ReportLine[];products:ReportGroup[];categories:ReportGroup[];sourceCount:number;productCount:number;unassignedCount:number;issueSourceCount:number;unknownPeriodCount:number;crossPeriodCount:number;}
 const unitFactor:Record<string,string>={g:'0.001',kg:'1',t:'1000'};
 export const businessLabel=(code:string)=>({packaging:'包装',weee:'电子电器',battery:'电池'}[code]||code||'分类未提供');
 const classificationTranslations:Record<string,string>={
@@ -55,8 +55,10 @@ export function groupLines(lines:ReportLine[],byProduct:boolean,byClassification
 export function reportTotals(lines:ReportLine[]):ReportGroup[]{return groupLines(lines,false);}
 export function buildParsedReport(sheets:Sheet[],filter:ReportFilter={}):ParsedReport {
  const query=filter.search?.trim().toLowerCase()||'';
+ const dateActive=!!(filter.start||filter.end),unknownPeriods=new Set<string>(),crossPeriods=new Set<string>();
+ const invalidDate=!!((filter.start&&!/^\d{4}-\d{2}-\d{2}$/.test(filter.start))||(filter.end&&!/^\d{4}-\d{2}-\d{2}$/.test(filter.end))||(filter.start&&!parsePeriod(filter.start))||(filter.end&&!parsePeriod(filter.end))||(filter.start&&filter.end&&filter.start>filter.end));
  const all=reportLines(sheets);const lines=all.filter(l=>{
- if(filter.start&&filter.end&&filter.start>filter.end)return false;
+ if(invalidDate)return false;
  if(filter.business&&filter.business!=='all'&&l.business!==(filter.business==='__missing__'?'':filter.business))return false;
  if(filter.country&&filter.country!=='all'&&l.country!==filter.country)return false;
  if(filter.product&&filter.product!=='all'&&(l.productId||'__missing__')!==filter.product)return false;
@@ -65,8 +67,13 @@ export function buildParsedReport(sheets:Sheet[],filter:ReportFilter={}):ParsedR
  if(filter.classification&&filter.classification!=='all'&&(l.classification||'__missing__')!==filter.classification)return false;
  if(filter.file&&filter.file!=='all'&&l.row.fileId!==filter.file)return false;
  if(query&&!`${l.productId} ${l.productName} ${l.row.values.sku||''} ${l.classification} ${l.row.fileName}`.toLowerCase().includes(query))return false;
- const period=parsePeriod(l.period);if(period&&filter.start&&filter.end){if(period[1]<filter.start||period[0]>filter.end)return false;if(period[0]<filter.start||period[1]>filter.end)l.notes.push('原始期间跨越筛选范围，显示整行数值，未按天分摊');}
- return true;});
+ const period=parsePeriod(l.period);
+ if(dateActive){
+  if(!period){unknownPeriods.add(l.sourceId);return false;}
+  if((filter.start&&period[1]<filter.start)||(filter.end&&period[0]>filter.end))return false;
+  if((filter.start&&period[0]<filter.start)||(filter.end&&period[1]>filter.end))crossPeriods.add(l.sourceId);
+ }
+ return true;}).map(l=>crossPeriods.has(l.sourceId)?{...l,notes:[...l.notes,'原始期间跨越筛选范围，显示整行数值，未按天分摊']}:l);
  const sources=new Set(lines.map(l=>l.sourceId));const productIds=new Set(lines.filter(l=>l.productId).map(l=>JSON.stringify([l.row.values.customer,l.row.values.store,l.productId])));
- return {lines,products:groupLines(lines,true).sort((a,b)=>(a.productId?'0'+a.productId:'1').localeCompare(b.productId?'0'+b.productId:'1')||a.business.localeCompare(b.business)),categories:groupLines(lines,false),sourceCount:sources.size,productCount:productIds.size,unassignedCount:new Set(lines.filter(l=>!l.productId).map(l=>l.sourceId)).size,issueSourceCount:new Set(lines.filter(l=>l.notes.length).map(l=>l.sourceId)).size};
+ return {lines,unknownPeriodCount:unknownPeriods.size,crossPeriodCount:crossPeriods.size,products:groupLines(lines,true).sort((a,b)=>(a.productId?'0'+a.productId:'1').localeCompare(b.productId?'0'+b.productId:'1')||a.business.localeCompare(b.business)),categories:groupLines(lines,false),sourceCount:sources.size,productCount:productIds.size,unassignedCount:new Set(lines.filter(l=>!l.productId).map(l=>l.sourceId)).size,issueSourceCount:new Set(lines.filter(l=>l.notes.length).map(l=>l.sourceId)).size};
 }

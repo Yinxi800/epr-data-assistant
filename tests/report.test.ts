@@ -39,3 +39,11 @@ it('细分类仅翻译已有标签，不根据产品补分类，未识别原值�
  expect(classificationLabel('SMALL EQUIPMENT EXCEPT PHOTOVOLTAIC PANEL')).toBe('小型设备（光伏板除外）');expect(classificationLabel('TEMPERATURE EXCHANGE EQUIPMENT')).toBe('温度交换设备');expect(classificationLabel('UNLISTED / SOURCE LABEL')).toBe('UNLISTED / SOURCE LABEL');
  const sheets=load();sheets[0].rows.push({...sheets[0].rows[0],ASIN:'SECOND',EPR_SUBCATEGORY1:'',TOTAL_REPORTED_WEIGHT_KG:'0.1'});sheets[0].rowNumbers.push(5);const totals=reportTotals(buildParsedReport(sheets,{business:'weee'}).lines);expect(totals).toHaveLength(2);expect(totals.find(g=>!g.classification)?.kg).toBe('0.1');
 });
+
+it('日期筛选支持单边边界，未知期间单独计数，跨期整行保留且材料不重复计行',()=>{
+ const sheets=load();sheets[0].rows[2].REPORT_PERIOD_START='';sheets[0].rows[2].REPORT_PERIOD_END='';
+ expect(buildParsedReport(sheets).sourceCount).toBe(3);const r=buildParsedReport(sheets,{start:'2026-10-15',end:'2026-10-20'});expect(r.sourceCount).toBe(2);expect(r.unknownPeriodCount).toBe(1);expect(r.crossPeriodCount).toBe(2);expect(r.products.find(g=>g.business==='weee')?.kg).toBe('7.125');
+ expect(buildParsedReport(sheets,{start:'2026-11-01'}).sourceCount).toBe(0);expect(buildParsedReport(sheets,{end:'2026-10-01'}).sourceCount).toBe(2);expect(buildParsedReport(sheets,{end:'2026-09-30'}).sourceCount).toBe(0);expect(buildParsedReport(sheets,{start:'2026-10-31'}).sourceCount).toBe(2);
+ expect(buildParsedReport(sheets,{start:'2026-02-30'}).sourceCount).toBe(0);expect(buildParsedReport(sheets,{start:'2026-11-01',end:'2026-10-01'}).sourceCount).toBe(0);expect(buildParsedReport(sheets,{business:'weee',start:'2026-10-01'}).unknownPeriodCount).toBe(0);
+ expect(buildParsedReport(sheets).lines.some(l=>l.notes.some(n=>n.includes('原始期间跨越筛选')))).toBe(false);
+});
