@@ -5,7 +5,7 @@ import {normalizeBusiness} from './rules';
 import type {DataRow,Sheet} from './types';
 export interface ReportLine {row:DataRow;sourceId:string;productId:string;productName:string;business:string;classification:string;layer:string;country:string;period:string;quantity:string|null;kg:string|null;material:string;notes:string[];}
 export interface ReportGroup {channel:string;key:string;fileName:string;customer:string;store:string;productId:string;productName:string;business:string;classification:string;layer:string;country:string;period:string;quantity:string|null;kg:string|null;partial:boolean;materials:{name:string;kg:string|null}[];sourceIds:string[];lines:ReportLine[];notes:string[];}
-export interface ReportFilter {search?:string;business?:string;country?:string;start?:string;end?:string;}
+export interface ReportFilter {search?:string;business?:string;country?:string;product?:string;material?:string;layer?:string;classification?:string;file?:string;start?:string;end?:string;}
 export interface ParsedReport {lines:ReportLine[];products:ReportGroup[];categories:ReportGroup[];sourceCount:number;productCount:number;unassignedCount:number;issueSourceCount:number;}
 const unitFactor:Record<string,string>={g:'0.001',kg:'1',t:'1000'};
 export const businessLabel=(code:string)=>({packaging:'包装',weee:'电子电器',battery:'电池'}[code]||code||'分类未提供');
@@ -31,10 +31,10 @@ export function reportLines(sheets:Sheet[]):ReportLine[]{const output=normalizeR
  if(summaryIdentifier&&asin)notes.push(`原报告标识“${asin}”不是标准产品 ASIN，作为未分配产品的汇总行保留`);
  return {row,sourceId,productId,productName:v.name?.trim()||(productId?'未提供产品名称':'未分配到产品'),business,classification:v.categoryDetail?.trim()||'',layer:v.layer||'',country:country.code||'待核对',period:v.period||'未提供',quantity:notes.includes('数量缺失或格式异常')?null:quantity,kg,material:v.material||'未分类',notes};
 });const seen=new Set<string>(),fingerprints=new Map<string,string[]>();for(const line of output){if(seen.has(line.sourceId))continue;seen.add(line.sourceId);const key=JSON.stringify(Object.entries(line.row.raw).sort(([a],[b])=>a.localeCompare(b)));const matches=fingerprints.get(key);if(matches)matches.push(line.sourceId);else fingerprints.set(key,[line.sourceId]);}const duplicates=new Set([...fingerprints.values()].filter(ids=>ids.length>1).flat());for(const line of output)if(duplicates.has(line.sourceId))line.notes.push('原始行内容重复，已保留，请核对是否需要重复统计');return output;}
-export function groupLines(lines:ReportLine[],byProduct:boolean):ReportGroup[]{
+export function groupLines(lines:ReportLine[],byProduct:boolean,byClassification=true):ReportGroup[]{
  const groups=new Map<string,ReportGroup>();
- for(const line of lines){const v=line.row.values;const key=JSON.stringify([line.row.fileId,v.customer||'',v.store||'',line.country,line.period,line.business,line.classification,line.layer,v.channel||'',...(byProduct?[line.productId||line.sourceId,v.sku||'']:[])]);
- const group=groups.get(key)||{channel:v.channel||'',key,fileName:line.row.fileName,customer:v.customer||'未提供',store:v.store||'未提供',productId:byProduct?line.productId:'',productName:byProduct?line.productName:'',business:line.business,classification:line.classification,layer:line.layer,country:line.country,period:line.period,quantity:null,kg:null,partial:false,materials:[],sourceIds:[],lines:[],notes:[]};group.lines.push(line);groups.set(key,group);}
+ for(const line of lines){const v=line.row.values;const key=JSON.stringify([line.row.fileId,v.customer||'',v.store||'',line.country,line.period,line.business,byClassification?line.classification:'',line.layer,v.channel||'',...(byProduct?[line.productId||line.sourceId,v.sku||'']:[])]);
+ const group=groups.get(key)||{channel:v.channel||'',key,fileName:line.row.fileName,customer:v.customer||'未提供',store:v.store||'未提供',productId:byProduct?line.productId:'',productName:byProduct?line.productName:'',business:line.business,classification:byClassification?line.classification:'',layer:line.layer,country:line.country,period:line.period,quantity:null,kg:null,partial:false,materials:[],sourceIds:[],lines:[],notes:[]};group.lines.push(line);groups.set(key,group);}
  for(const group of groups.values()){
   const sources=new Map<string,ReportLine[]>(),materials=new Map<string,{total:Decimal;known:boolean;missing:boolean}>();let total=new Decimal(0),known=false;
   for(const line of group.lines){sources.set(line.sourceId,[...(sources.get(line.sourceId)||[]),line]);const material=materials.get(line.material)||{total:new Decimal(0),known:false,missing:false};if(line.kg===null){material.missing=true;group.partial=true;}else{known=true;total=total.plus(line.kg);material.known=true;material.total=material.total.plus(line.kg);}materials.set(line.material,material);if(line.row.amazon?.blankMaterials.length)group.partial=true;}
@@ -44,12 +44,20 @@ export function groupLines(lines:ReportLine[],byProduct:boolean):ReportGroup[]{
  }
  return [...groups.values()];
 }
+// Totals span products and subclasses, but preserve file, account, country,
+// period, category, packaging layer and channel boundaries.
+export function reportTotals(lines:ReportLine[]):ReportGroup[]{return groupLines(lines,false,false);}
 export function buildParsedReport(sheets:Sheet[],filter:ReportFilter={}):ParsedReport {
  const query=filter.search?.trim().toLowerCase()||'';
  const all=reportLines(sheets);const lines=all.filter(l=>{
  if(filter.start&&filter.end&&filter.start>filter.end)return false;
  if(filter.business&&filter.business!=='all'&&l.business!==(filter.business==='__missing__'?'':filter.business))return false;
  if(filter.country&&filter.country!=='all'&&l.country!==filter.country)return false;
+ if(filter.product&&filter.product!=='all'&&(l.productId||'__missing__')!==filter.product)return false;
+ if(filter.material&&filter.material!=='all'&&l.material!==filter.material)return false;
+ if(filter.layer&&filter.layer!=='all'&&(l.layer||'__missing__')!==filter.layer)return false;
+ if(filter.classification&&filter.classification!=='all'&&(l.classification||'__missing__')!==filter.classification)return false;
+ if(filter.file&&filter.file!=='all'&&l.row.fileId!==filter.file)return false;
  if(query&&!`${l.productId} ${l.productName} ${l.row.values.sku||''} ${l.classification} ${l.row.fileName}`.toLowerCase().includes(query))return false;
  const period=parsePeriod(l.period);if(period&&filter.start&&filter.end){if(period[1]<filter.start||period[0]>filter.end)return false;if(period[0]<filter.start||period[1]>filter.end)l.notes.push('原始期间跨越筛选范围，显示整行数值，未按天分摊');}
  return true;});
