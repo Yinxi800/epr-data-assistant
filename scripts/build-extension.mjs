@@ -4,6 +4,7 @@ let html=await readFile('dist/index.html','utf8');
 html=html.replace(/connect-src 'self' ws:\/\/127\.0\.0\.1:4173/g,"connect-src 'self'");
 await mkdir('extension-dist',{recursive:true});
 for(const name of ['manifest.json','background.js'])await cp(`extension/${name}`,`extension-dist/${name}`);
+await cp('extension/icons','extension-dist/icons',{recursive:true});
 // Both visible extension folders are loadable; generated app files stay out of Git.
 for(const folder of ['extension-dist','extension']){
  await rm(`${folder}/app`,{recursive:true,force:true});

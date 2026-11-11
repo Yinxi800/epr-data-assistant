@@ -1,3 +1,5 @@
+<p align="center"><img src="public/brand/icon-128.png" width="80" height="80" alt="EPR申报数据助手图标"></p>
+
 # EPR申报数据助手
 
 React + TypeScript 中文本地报告解析工具。默认上传后直接展示解析结果并导出；国家、期间、产品与分类从报告读取。**只做解析、复核与通用申报准备，不连接店铺、不上传报告、不提交正式申报、不计算回收费。**
