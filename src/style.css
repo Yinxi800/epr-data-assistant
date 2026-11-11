@@ -361,3 +361,8 @@
 .report-compact .weight-subtotal-cell .subline{white-space:normal}
 .report-compact .source-weight-summary{margin:12px 0;font-size:12px}
 .report-compact .source-weight-summary>.report-weight-details{margin-top:6px}
+.report-compact .missing-display-control{display:flex;align-items:center;gap:10px;margin-left:auto;flex-wrap:wrap}
+.report-compact .missing-display-control button{min-height:32px;font-size:12px;padding:5px 10px}
+.report-compact .missing-display-control button[aria-pressed=true]{background:#edf4ff;border-color:#7d9ac5;color:#244e95}
+.report-compact .missing-display-control>span{font-size:11px;color:var(--muted)}
+@media(max-width:750px){.report-compact .missing-display-control{margin-left:0;width:100%}.report-compact .missing-display-control button{min-height:44px}}
