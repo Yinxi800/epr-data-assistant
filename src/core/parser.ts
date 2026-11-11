@@ -94,21 +94,27 @@ export function parseBuffer(buffer:ArrayBuffer,fileName:string,fileId:string,has
     return sheet;
   });
 }
-export async function parseFile(file:File,encoding:CsvEncoding='auto'):Promise<Sheet[]> {
+export async function parseFile(file:File,encoding:CsvEncoding='auto',signal?:AbortSignal):Promise<Sheet[]> {
+  signal?.throwIfAborted();
   if(file.size>FILE_LIMIT) throw new Error('文件超过 10 MB，请拆分后重试。');
   if(!/\.(csv|tsv|txt|xlsx|xls|ods)$/i.test(file.name)) throw new Error('请选择 CSV、TSV、TXT、XLSX、XLS 或 ODS 文件。');
   const buffer=await file.arrayBuffer();
   const digest=await crypto.subtle.digest('SHA-256',buffer);
   const hash=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join('');
+  signal?.throwIfAborted();
   const fileId=crypto.randomUUID();
   return new Promise((resolve,reject)=>{
     const worker=new Worker(new URL('./parser.worker.ts',import.meta.url),{type:'module'});
-    const timeout=setTimeout(()=>{worker.terminate();reject(new Error('解析超过 30 秒，已停止。请拆分文件或检查工作簿是否包含过多格式区域。'));},30000);
+    const cleanup=()=>{clearTimeout(timeout);signal?.removeEventListener('abort',abort);worker.terminate();};
+    const abort=()=>{cleanup();reject(new DOMException('解析已停止','AbortError'));};
+    const timeout=setTimeout(()=>{cleanup();reject(new Error('解析超过 30 秒，已停止。请拆分文件或检查工作簿是否包含过多格式区域。'));},30000);
+    signal?.addEventListener('abort',abort,{once:true});
+    if(signal?.aborted){abort();return;}
     worker.onmessage=(event:MessageEvent<{sheets?:Sheet[];error?:string}>)=>{
-      clearTimeout(timeout);worker.terminate();
+      cleanup();
       if(event.data.error) reject(new Error(event.data.error));else resolve(event.data.sheets||[]);
     };
-    worker.onerror=()=>{clearTimeout(timeout);worker.terminate();reject(new Error('文件解析失败，请检查文件内容、格式或文本编码。'));};
+    worker.onerror=()=>{cleanup();reject(new Error('文件解析失败，请检查文件内容、格式或文本编码。'));};
     worker.postMessage({buffer,fileName:file.name,fileId,hash,encoding},[buffer]);
   });
 }
