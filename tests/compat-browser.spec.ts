@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import * as XLSX from 'xlsx';
 test('统一网页版导入、筛选、来源及全量下载',async({page})=>{
- await page.goto('/');await expect(page.getByRole('heading',{name:'上传报告，直接看数据'})).toBeVisible();
+ await page.goto('./');await expect(page.getByRole('heading',{name:'上传报告，直接看数据'})).toBeVisible();
  await page.getByLabel('上传报告',{exact:true}).setInputFiles(path.resolve('tests/fixtures/模拟_亚马逊多材料.csv'));
  await expect(page.getByRole('heading',{name:'报告已整理'})).toBeVisible();await expect(page.locator('#report-table tbody tr')).toHaveCount(15);
  await page.locator('#report-table tbody button').first().click();await expect(page.getByRole('region',{name:'原始来源'})).toBeVisible();await page.getByRole('button',{name:'收起来源',exact:true}).click();

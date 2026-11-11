@@ -17,3 +17,7 @@ Mac、Windows 用户访问同一个网址：https://yinxi800.github.io/epr-data-
 Chrome / Edge 扩展仍可独立使用，Mac、Windows 共用一份扩展包。Firefox / Safari 本次使用统一网页版，不提供其扩展安装包。
 
 核验参考（2026-11-11）：[GitHub Pages 说明](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)、[Edge 扩展兼容说明](https://learn.microsoft.com/en-us/microsoft-edge/extensions/developer-guide/port-chrome-extension)。
+
+## 后续更新
+
+修改私有源码后先构建和验证，再将 `dist/` 的内容同步到公开发布仓库 `Yinxi800/epr-data-assistant-site` 的 main 分支根目录（保留 `.nojekyll`）。该仓库的 Pages 自动发布 main。只同步构建产物，不复制客户报告、output、测试下载或私有仓库历史。
