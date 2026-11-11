@@ -470,3 +470,15 @@
  .report-home .report-upload{padding:28px 20px;min-height:330px}
  .report-home .upload-guide dl>div{margin-bottom:18px}
 }
+
+/* Visible native scrollbars for report details, totals and source tables. */
+.report-workspace .table-wrap{scrollbar-gutter:stable;scrollbar-width:auto;scrollbar-color:#51709c #e4ebf5}
+@supports selector(::-webkit-scrollbar){
+ .report-workspace .table-wrap{scrollbar-color:auto}
+ .report-workspace .table-wrap::-webkit-scrollbar{width:16px;height:16px}
+ .report-workspace .table-wrap::-webkit-scrollbar-track{background:#e4ebf5;border-radius:4px}
+ .report-workspace .table-wrap::-webkit-scrollbar-thumb{background:#51709c;border:3px solid #e4ebf5;border-radius:8px;min-height:40px}
+ .report-workspace .table-wrap::-webkit-scrollbar-thumb:hover{background:#31578d}
+ .report-workspace .table-wrap::-webkit-scrollbar-thumb:active{background:#203f70}
+ .report-workspace .table-wrap::-webkit-scrollbar-corner{background:#e4ebf5}
+}
