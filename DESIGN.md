@@ -163,3 +163,6 @@ components:
 本次实际运行 [UI UX Pro Max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) 官方检索，提交 `6ae86f61f520d6ca229d2f40e070410638c908c5`。Data-Dense Dashboard 样式及蓝色/琥珀色方向适合本场景。两次搜索返回的 Enterprise Gateway 营销布局不适用，未采用；Fira 字体和滚动动画也按中文离线及用户要求省略。此处布局由用户确认的三步流程决定。
 
 [UX Flow Skills](https://github.com/jpoindexter/ux-flow-skills) 的表单、错误恢复和表格方法用于交互方案；完整条件见 `flow-report.html`。实现后的交互检查采用重新获取的 [Vercel Web Interface Guidelines](https://raw.githubusercontent.com/vercel-labs/web-interface-guidelines/main/command.md)。运行结果和未完成项应在验证记录中单独说明，不把设计建议当作功能已实现。
+
+## v0.2.1 默认入口修正
+默认使用直接解析阅读页：上传后表格直接出现，导出始终可用（有成功解析数据时）。保留本规范的配色、字号、表格与焦点样式，取消默认三步导航、异常工作队列和人工复核门槛。三步工作区仅由 `?review=1` 访问。
