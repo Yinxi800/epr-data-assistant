@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import {downloadBlob} from './export';
+import {downloadBlob} from './download';
 import {businessLabel,classificationLabel,reportWeightLabel,reportQuantityGroups,originalClassification,type ParsedReport,type ReportFilter,type ReportGroup} from './report';
 import type {Sheet} from './types';
 function summary(g:ReportGroup){return {'文件':g.fileName,'客户或报告账户':g.customer,'店铺或商城范围':g.store,'产品名称':g.productName,'ASIN或SKU':g.productId,'EPR类别':businessLabel(g.business),'原报告子分类':originalClassification(g),'细分类':classificationLabel(g.classification),'包装层级':g.layer,'履约渠道':g.channel,'目的国家':g.country,'原始期间':g.period,'报告数量（包装见数量核对表）':g.business==='packaging'?'见数量核对表':g.quantity??'未知','重量合计 kg':g.kg??'未知','重量明细 kg':g.materials.map(m=>`${reportWeightLabel(m.name,g.business)}: ${m.kg??'未知'}`).join('; '),'重量范围':g.partial?'部分材料或重量未提供，仅合计已知项':'已填项合计','来源文件行号':[...new Set(g.lines.map(l=>l.row.rowNumber))].join(', '),'待核对':g.notes.join('\n')};}

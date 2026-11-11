@@ -1,6 +1,6 @@
 import {useEffect,useState} from 'react';
 import {CalendarDays} from 'lucide-react';
-import {periodRange,type PeriodMode} from './PeriodPicker';
+import {periodRange,type PeriodMode} from '../core/period';
 interface Props {start?:string;end?:string;reportRange:[string,string]|null;onChange:(range:{start?:string;end?:string})=>void;}
 export default function ReportDateFilter({start,end,reportRange,onChange}:Props){
  const [mode,setMode]=useState<PeriodMode|'all'>(start||end?'custom':'all');

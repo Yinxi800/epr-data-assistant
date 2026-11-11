@@ -2,11 +2,4 @@ export const fields = {categoryDetail:'原报告子分类',customer:'客户',sto
 export type Field = keyof typeof fields;
 export type Values = Partial<Record<Field,string>>;
 export interface Sheet {amazon?:{enabled:boolean;confirmed:boolean;customer?:string;store?:string};csvEncoding?:string;encodingDetection?:'bom'|'utf8-valid'|'heuristic'|'manual'|'xlsx';encodingNeedsReview?:boolean;id:string;fileId:string;fileName:string;hash:string;name:string;headers:string[];rows:Record<string,string>[];rowNumbers:number[];mapping:Partial<Record<Field,string>>;confirmed:boolean;enabled:boolean;duplicate:boolean;numberFormat:'dot'|'comma';}
-export interface Edit {id:string;rowId:string;field:Field;before:string;after:string;reason:string;at:string;calculationContext?: Pick<Settings, 'returns'|'basis'|'start'|'end'|'country'|'business'|'group'> & { quantitySnapshot?: { sales: string; returns: string } };}
 export interface DataRow {amazon?:{sourceId:string;version:string;weightColumn:string;confirmed:boolean;blankMaterials:string[];originalCategory:string};id:string;sheetId:string;fileId:string;fileName:string;sheetName:string;rowNumber:number;raw:Record<string,string>;values:Values;numberFormat:'dot'|'comma';mappingConfirmed:boolean;duplicateFile:boolean;}
-export interface Settings {country:string;business:string;start:string;end:string;returns:'unconfirmed'|'gross'|'net';basis:string;scopeConfirmed:boolean;specialConfirmed:boolean;group:string;reviewed:boolean;}
-export interface Issue {rowId:string;severity:'block'|'confirm'|'info';code:string;message:string;}
-export interface ResultRow extends DataRow {effective:Values;quantity:string|null;kg:string|null;formula:string;issues:Issue[];status:'included'|'excluded'|'pending';edited:boolean;}
-export interface Summary {layer:string;categoryDetail:string;key:string;country:string;customer:string;store:string;category:string;material:string;quantity:string;kg:string;rowIds:string[];}
-export interface QuantityGroup {country:string;customer:string;store:string;category:string;layer:string;quantity:string|null;sourceRows:number;complete:boolean;}
-export interface Calculation {quantityGroups:QuantityGroup[];rows:ResultRow[];issues:Issue[];summaries:Summary[];counts:{imported:number;included:number;excluded:number;pending:number};}

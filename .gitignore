@@ -6,5 +6,5 @@ playwright-report/
 test-results/
 .DS_Store
 *.local
-.impeccable/review/
+.impeccable/
 extension/app/

@@ -1,6 +1,6 @@
 import {useMemo,useRef,useState,useEffect} from 'react';
 import {Upload,Download,FileSpreadsheet,Search,SlidersHorizontal,ArrowLeft,ShieldCheck,Files,ChevronDown,X,CheckCircle2} from 'lucide-react';
-import type {WorkflowManifestEntry} from '../core/workflow';
+import type {ImportManifestEntry} from '../core/import';
 import type {DataRow,Field,Sheet} from '../core/types';
 import type {CsvEncoding} from '../core/encoding';
 import {buildParsedReport,businessLabel,classificationLabel,reportTotals,reportQuantityGroups,reportQuantityKey,originalClassification,type ReportGroup,type ReportFilter} from '../core/report';
@@ -11,7 +11,7 @@ import ReportWeightDetails from './ReportWeightDetails';
 const mappingNotice='各列由工具自动识别，请与原报告核对';
 const rowNotes=(g:ReportGroup)=>g.notes.filter(n=>n!==mappingNotice&&!(n.startsWith('以下材料未填重量：')&&g.kg!==null&&!g.partial));
 const canCollapseZero=(g:ReportGroup)=>g.business==='packaging'&&g.kg==='0'&&!g.partial&&!rowNotes(g).length;
-interface Props {manifest:WorkflowManifestEntry[];onRetryFile:(id:string)=>void;onReplaceFile:(id:string,file:File)=>void;onStop:()=>void;sheets:Sheet[];busy:string;error:string;encoding:CsvEncoding;setEncoding:(v:CsvEncoding)=>void;onFiles:(files:File[])=>void;onDemo:()=>void;onClear:()=>void;onAdvanced:()=>void;}
+interface Props {manifest:ImportManifestEntry[];onRetryFile:(id:string)=>void;onReplaceFile:(id:string,file:File)=>void;onStop:()=>void;sheets:Sheet[];busy:string;error:string;encoding:CsvEncoding;setEncoding:(v:CsvEncoding)=>void;onFiles:(files:File[])=>void;onDemo:()=>void;onClear:()=>void;}
 export default function DirectReportWorkspace({sheets,busy,error,encoding,setEncoding,onFiles,onDemo,onClear,manifest,onRetryFile,onReplaceFile,onStop}:Props){
  const replacement=useRef<HTMLInputElement>(null),replacementId=useRef('');const input=useRef<HTMLInputElement>(null),sourcePanel=useRef<HTMLElement>(null),sourceTrigger=useRef<HTMLButtonElement|null>(null);const [tab,setTab]=useState<'products'|'categories'>('products'),[showMissing,setShowMissing]=useState(false),[hideZeroMaterials,setHideZeroMaterials]=useState(false),[filter,setFilter]=useState<ReportFilter>({}),[source,setSource]=useState<ReportGroup|null>(null),[page,setPage]=useState(0),[exporting,setExporting]=useState(false),[exportError,setExportError]=useState(''),[exportNotice,setExportNotice]=useState('');
  const sourceOrigin=useRef<{x:number;y:number;scrolls:{element:HTMLElement;top:number;left:number}[]}|null>(null);

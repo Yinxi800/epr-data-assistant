@@ -1,15 +1,10 @@
 import { describe,it,expect } from 'vitest';
 import * as XLSX from 'xlsx';
 import { inferMapping,parseBuffer,FILE_LIMIT } from '../src/core/parser';
-import { buildWorkbook,buildIssuesCsv,safeCsvCell,exportFileName } from '../src/core/export';
-import type {Calculation,Settings,ResultRow} from '../src/core/types';
+import {buildParsedReport} from '../src/core/report';
+import {buildReportWorkbook} from '../src/core/report-export';
 const buffer=(s:string)=>new TextEncoder().encode(s).buffer as ArrayBuffer;
 const parse=(s:string)=>parseBuffer(buffer(s),'模拟.csv','file-1','hash');
-const settings:Settings={country:'DE',business:'packaging',start:'2026-10-01',end:'2026-10-31',returns:'gross',basis:'用户确认销售数量，不扣退货',scopeConfirmed:true,specialConfirmed:true,group:'["模拟客户","模拟店铺"]',reviewed:false};
-function calculation():Calculation {
-  const row:ResultRow={id:'row1',sheetId:'sheet1',fileId:'file1',fileName:'=HYPERLINK("https://bad")',sheetName:'模拟',rowNumber:2,raw:{'重量':'50','名称':'=1+1'},values:{weight:'50',name:'=1+1'},effective:{weight:'60',name:'=1+1'},numberFormat:'dot',mappingConfirmed:true,duplicateFile:false,quantity:'100',kg:'6',formula:'100 × 60 × 0.001 = 6 kg',issues:[{rowId:'row1',severity:'info',code:'edited',message:'人工修改'}],status:'included',edited:true};
-  return {quantityGroups:[],rows:[row],issues:row.issues,summaries:[{key:'a',layer:'',categoryDetail:'',country:'DE',customer:'模拟客户',store:'模拟店铺',category:'包装',material:'纸',quantity:'100',kg:'6',rowIds:['row1']}],counts:{imported:1,included:1,excluded:0,pending:0}};
-}
 describe('local parser',()=>{
   it('keeps source text and physical row numbers, does not confirm inferred mappings',()=>{
     const sheet=parse('客户,重量,重量单位\n模拟客户,50,g\n\n模拟客户,"1,25",kg')[0];
@@ -38,25 +33,25 @@ describe('local parser',()=>{
     expect(()=>parseBuffer(XLSX.write(wb,{type:'array',bookType:'xlsx'}),'a.xlsx','a','b')).toThrow('含公式');
   });
 });
-describe('auditable exports',()=>{
-  it('round trips consistent results, original values, edits and metadata',()=>{
-    const data=calculation();const sheet=parse('客户,重量\n模拟客户,50')[0];
-    const wb=buildWorkbook(data,[sheet],[{id:'e1',rowId:'row1',field:'weight',before:'50',after:'60',reason:'人工实测',at:'2026-11-10T00:00:00Z'}],settings);
-    const restored=XLSX.read(XLSX.write(wb,{type:'array',bookType:'xlsx'}),{type:'array'});
-    expect(restored.SheetNames).toEqual(['数据汇总','标准化明细','异常及缺失清单','人工修改记录','字段映射及计算口径','原始数据']);
-    const summary=XLSX.utils.sheet_to_json<Record<string,string>>(restored.Sheets['数据汇总'])[0];expect(summary['重量 kg（精确值）']).toBe('6');
-    const details=XLSX.utils.sheet_to_json<Record<string,string>>(restored.Sheets['标准化明细'])[0];expect(details['原值·重量']).toBe('50');expect(details['当前·重量']).toBe('60');
-    expect(details['当前·产品名称']).toBe('=1+1');
-    expect(Object.values(restored.Sheets['标准化明细']).some(c=>typeof c==='object'&&c&&'f' in c)).toBe(false);
-    const audit=XLSX.utils.sheet_to_json<Record<string,string>>(restored.Sheets['人工修改记录'])[0];expect(audit['修改原因']).toBe('人工实测');
+
+describe('report exports',()=>{
+  it('round trips original values as text without executable formulas',()=>{
+    const sheets=parse('SKU,产品名称,销售数量,重量,重量单位,重量含义\nA,=1+1,100,50,g,单件');
+    const report=buildParsedReport(sheets);
+    const workbook=buildReportWorkbook(report,sheets,{});
+    const restored=XLSX.read(XLSX.write(workbook,{type:'array',bookType:'xlsx'}),{type:'array'});
+    expect(restored.SheetNames).toEqual(['按产品分类','分类汇总','数量核对','原始报告','解析说明']);
+    const detail=XLSX.utils.sheet_to_json<Record<string,string>>(restored.Sheets['按产品分类'])[0];
+    expect(detail['重量合计 kg']).toBe('5');
+    expect(detail['产品名称']).toBe('=1+1');
+    for(const sheet of Object.values(restored.Sheets)) expect(Object.values(sheet).some(c=>typeof c==='object'&&c&&'f' in c)).toBe(false);
+    const original=XLSX.utils.sheet_to_json<Record<string,string>>(restored.Sheets['原始报告'])[0];
+    expect(original['重量']).toBe('50');expect(original['产品名称']).toBe('=1+1');
   });
-  it('never turns missing calculated weight into zero',()=>{
-    const data=calculation();data.rows[0].kg=null;
-    const row=XLSX.utils.sheet_to_json<Record<string,string>>(buildWorkbook(data,[],[],settings).Sheets['标准化明细'])[0];expect(row['计算重量 kg']).toBe('未知');
+  it('never exports missing weight as zero',()=>{
+    const sheets=parse('SKU,销售数量,重量,重量单位,重量含义\nA,100,,g,单件');
+    const workbook=buildReportWorkbook(buildParsedReport(sheets),sheets,{});
+    const detail=XLSX.utils.sheet_to_json<Record<string,string>>(workbook.Sheets['按产品分类'])[0];
+    expect(detail['重量合计 kg']).toBe('未知');
   });
-  it('protects CSV against formulas and keeps a UTF-8 BOM',()=>{
-    for(const value of ['=1+1','+SUM(A1)','-2+3','@x',' \t=cmd'])expect(safeCsvCell(value).startsWith("'")).toBe(true);
-    const csv=buildIssuesCsv(calculation());expect(csv.startsWith('\uFEFF')).toBe(true);expect(csv).toContain("'=HYPERLINK");expect(safeCsvCell('普通中文')).toBe('普通中文');
-  });
-  it('names exports with context and never claims formal filing',()=>{const filename=exportFileName(settings,'xlsx');expect(filename).toContain('DE_包装_2026-10-01_2026-10-31_');expect(filename).toContain('通用整理');});
 });

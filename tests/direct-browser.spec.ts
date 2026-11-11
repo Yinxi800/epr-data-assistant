@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 import * as XLSX from 'xlsx';
-const screenshotDirectory=path.join('output/customer-fix-20261111',new Date().toISOString().replace(/[:.]/g,'-'));
+const screenshotDirectory=path.join('test-results/screenshots',new Date().toISOString().replace(/[:.]/g,'-'));
 fs.mkdirSync(screenshotDirectory,{recursive:true});
 const screenshotPath=(name:string)=>path.join(screenshotDirectory,name);
 test('默认上传即展示、无异常步骤或确认门槛，搜索不缩小导出',async({page})=>{

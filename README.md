@@ -17,17 +17,4 @@
 
 ## 浏览器扩展
 
-Chrome、Edge 可使用本地扩展。构建后在扩展管理页开启开发者模式，选择“加载已解压的扩展”，载入 `extension-dist`；更新后点击“重新加载”。
-
-## 本地开发
-
-需要 Node.js 22.12+ 和 npm。
-
-```sh
-npm ci
-npm run dev
-```
-
-构建网站：`npm run build`；生成扩展：`npm run build && npm run extension`。推送 main 后，GitHub Pages 自动测试并发布网站。
-
-[系统与浏览器兼容](docs/PLATFORM_SUPPORT.md) · [验证记录](docs/VALIDATION.md) · [详细实现与历史说明](docs/IMPLEMENTATION_HISTORY.md)
+支持 Chrome、Edge 本地扩展，与网页版使用相同功能。
