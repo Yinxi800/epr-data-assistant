@@ -18,3 +18,20 @@
 ## 浏览器扩展
 
 支持 Chrome、Edge 本地扩展，与网页版使用相同功能。
+
+---
+
+## EPR Data Assistant
+
+Upload Amazon EPR reports, review quantities and weights by product and category, and export the results to Excel.
+
+**[Open the web app](https://yinxi800.github.io/epr-data-assistant/)** · Works on Mac and Windows. No installation or sign-in required.
+
+- Import multiple CSV or Excel files together.
+- Filter by product, destination country, category, packaging level, or date and view the corresponding totals.
+- Trace figures to the original report and distinguish missing weights from zero values.
+- Download complete summaries, detailed data, and original report data. On-screen filters do not limit the export.
+
+Files are processed locally in your browser and are never uploaded. Download your results before closing or refreshing the page. The tool prepares data for review. It does not submit official declarations or calculate recycling fees. Some Amazon report versions may not be supported.
+
+The same features are available in a local browser extension for Chrome and Edge.
