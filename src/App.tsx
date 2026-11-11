@@ -50,20 +50,20 @@ export default function App(){
  async function runQueue(items:{id:string,file:File}[]){
   if(importController.current)return;
   const controller=new AbortController();importController.current=controller;
-  setError('');setNotice('');setBusy('正在本地解析…');
+  setError('');setNotice('');setBusy('正在读取报告…');
   let completed=0,failed=0;
   try{
    for(const item of items){
     if(controller.signal.aborted)break;
     setManifest(old=>old.map(m=>m.id===item.id?{...m,status:'processing',error:undefined}:m));
-    setBusy(`正在本地解析 ${item.file.name}`);
+    setBusy(`正在读取报告 ${item.file.name}`);
     try{
      const parsed=await parseFile(item.file,csvEncoding,controller.signal);
      if(controller.signal.aborted)break;
      if(!parsed.length)throw Error('文件中没有可读取的工作表。');
      const current=sheetsRef.current;
-     if(current.length+parsed.length>20)throw Error('当前会话最多 20 个工作表，请分批处理。');
-     if([...current,...parsed].reduce((n,s)=>n+workflowDetailCount(s),0)>20000)throw Error('当前会话超过 20,000 条计算明细，请拆分报告后重试。');
+     if(current.length+parsed.length>20)throw Error('一次最多处理 20 个工作表，请分批添加。');
+     if([...current,...parsed].reduce((n,s)=>n+workflowDetailCount(s),0)>20000)throw Error('数据超过 20,000 条明细，请将报告拆成小文件后重试。');
      const duplicate=current.some(s=>s.hash===parsed[0].hash);
      const next=[...current,...parsed.map(s=>({...s,duplicate}))];
      sheetsRef.current=next;setSheets(next);setActive(parsed[0].id);
@@ -75,10 +75,10 @@ export default function App(){
     }
    }
   }finally{
-   if(controller.signal.aborted)setManifest(old=>old.map(m=>items.some(i=>i.id===m.id)&&['queued','processing'].includes(m.status)?{...m,status:'stopped',error:'解析已停止；已完成文件保留，可单独重试。'}:m));
+   if(controller.signal.aborted)setManifest(old=>old.map(m=>items.some(i=>i.id===m.id)&&['queued','processing'].includes(m.status)?{...m,status:'stopped',error:'已停止读取。读完的文件已保留，其他文件可重试。'}:m));
    importController.current=null;setBusy('');invalidation();
    setNotice(`解析完成：${completed} 个文件成功${failed?`，${failed} 个失败`:''}${controller.signal.aborted?'；已停止剩余解析':''}。`);
-   if(failed)setError(`${failed} 个文件未能解析，请在文件清单中查看原因并单独重试。成功文件已保留。`);
+   if(failed)setError(`${failed} 个文件读取失败，请展开“本次报告”查看原因并重试。其他已读文件不受影响。`);
    if(upload.current)upload.current.value='';
   }
  }
@@ -110,7 +110,7 @@ export default function App(){
   setEdits([]);setExcluded([]);setAcks([]);setSettings(initial);setError('');setNotice('已恢复任务数据；失败文件重试需要重新选择原报告。');
  }
  async function demo(){setError('');try{const response=await fetch('./samples/模拟数据_包装.csv');if(!response.ok)throw Error('模拟文件未找到');await importFiles([new File([await response.blob()],'模拟数据_包装.csv')]);}catch(e){setError(String(e));}}
- function clear(){if(busy)return false;if(!window.confirm('清除本次报告和全部人工修改？已下载文件与保存的字段映射不受影响，此操作不能撤销。'))return false;setSheets([]);sheetsRef.current=[];setManifest([]);taskFiles.current.clear();setEdits([]);setExcluded([]);setAcks([]);setSettings(initial);setCsvEncoding('auto');setPeriodMode('custom');setActive('');setDetail(null);setStep(0);setError('');setNotice('本次会话数据已清除；已保存映射保留。');return true;}
+ function clear(){if(busy)return false;if(!window.confirm(quick?'清空页面中的报告？原文件和已下载的结果不受影响。清空后需要重新添加报告。':'清除本次报告和全部人工修改？已下载文件与保存的字段映射不受影响，此操作不能撤销。'))return false;setSheets([]);sheetsRef.current=[];setManifest([]);taskFiles.current.clear();setEdits([]);setExcluded([]);setAcks([]);setSettings(initial);setCsvEncoding('auto');setPeriodMode('custom');setActive('');setDetail(null);setStep(0);setError('');setNotice('本次会话数据已清除；已保存映射保留。');return true;}
  function saveMapping(){if(!sheet)return;try{localStorage.setItem(storageKey,JSON.stringify({mapping:sheet.mapping,numberFormat:sheet.numberFormat}));setNotice('已主动保存当前映射方案到此浏览器；未保存报告内容。');}catch{setError('浏览器不允许本地保存；映射仍可在当前会话使用。')}}
  function loadMapping(){if(!sheet)return;try{const raw=localStorage.getItem(storageKey);if(!raw){setNotice('尚未保存映射方案。');return;}const saved=JSON.parse(raw);const mapping=Object.fromEntries(Object.entries(saved.mapping||{}).filter(([k,v])=>k in fields&&sheet.headers.includes(v as string)));updateSheet(sheet.id,{mapping,numberFormat:saved.numberFormat==='comma'?'comma':'dot',confirmed:false});setNotice('已载入匹配到本表的字段，请重新确认。');}catch{setError('无法读取映射方案，请重新映射。')}}
  function applyEdit(){if(!currentDetail||!reason.trim()){setError('请填写修改原因。');return;}const old=currentDetail.effective[editField]||'';if(old===editValue){setError('新值与当前值相同。');return;}setEdits(prev=>[...prev,{id:crypto.randomUUID(),rowId:currentDetail.id,field:editField,before:old,after:editValue,reason:reason.trim(),at:new Date().toISOString(),calculationContext:{returns:settings.returns,basis:settings.basis,start:settings.start,end:settings.end,country:settings.country,business:settings.business,group:settings.group,quantitySnapshot:{sales:currentDetail.effective.sales||'',returns:currentDetail.effective.returns||''}}}]);setReason('');setError('');invalidation();}
